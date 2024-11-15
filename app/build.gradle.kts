@@ -10,6 +10,7 @@ plugins {
 android {
     namespace = "com.connor.episode"
     compileSdk = 35
+    ndkVersion = "28.0.12433566"
 
     defaultConfig {
         applicationId = "com.connor.episode"
@@ -19,6 +20,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.apply {
+                add("arm64-v8a")
+                add("armeabi-v7a")
+            }
+        }
     }
 
     buildTypes {
@@ -36,6 +44,13 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += "-Xcontext-receivers"
+    }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.0"
+        }
     }
     buildFeatures {
         compose = true

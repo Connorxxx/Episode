@@ -1,6 +1,6 @@
 [versions]
-agp = "8.9.0-alpha02"
-kotlin = "2.0.20"
+agp = "8.7.2"
+kotlin = "2.0.21"
 hilt = "2.52"
 ksp = "2.0.21-1.0.27"
 
@@ -52,9 +52,9 @@ ktor-client-encoding = { group = "io.ktor", name = "ktor-client-encoding", versi
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor"}
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor"}
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version = "room" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version = "room" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version = "room" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 android-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore-preferences" }
 
 
