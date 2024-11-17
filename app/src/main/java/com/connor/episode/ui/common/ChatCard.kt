@@ -41,20 +41,16 @@ fun ChatBubble(
         contentAlignment = if (message.isMe) Alignment.CenterEnd else Alignment.CenterStart
     ) {
         Card(
-            modifier = Modifier
-                .padding(8.dp)
-                .widthIn(max = 280.dp),
+            modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(
-                topStart = if (message.isMe) 16.dp else 0.dp,
-                topEnd = if (message.isMe) 0.dp else 16.dp,
-                bottomStart = 16.dp,
-                bottomEnd = 16.dp
+                topStart = if (message.isMe) 20.dp else 4.dp,
+                topEnd = if (message.isMe) 4.dp else 20.dp,
+                bottomStart = 20.dp,
+                bottomEnd = 20.dp
             ),
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isMe)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onPrimary
+                containerColor = if (message.isMe) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onPrimary
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = .4.dp)
         ) {
@@ -97,8 +93,8 @@ fun ChatMessageLazyColumn(
         modifier = modifier
             .fillMaxSize()
             //.padding(bottom = it.calculateBottomPadding())
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(1) {
             Spacer(modifier = Modifier.height(48.dp))
