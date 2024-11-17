@@ -22,6 +22,7 @@ class SerialPortViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
+        "ViewModel init ${hashCode()}".logCat()
         val list = if (BuildConfig.DEBUG) listOf("ttyS0", "ttyS1", "ttyS2", "ttyS3")
         else serialPortRepository.getAllDevices.map {
             it.replace("\\s\\(.*?\\)".toRegex(), "")
@@ -79,5 +80,8 @@ class SerialPortViewModel @Inject constructor(
             _state.update { it.copy(isConnected = open) }
         }
 
-
+    override fun onCleared() {
+        super.onCleared()
+        "ViewModel onCleared".logCat()
+    }
 }

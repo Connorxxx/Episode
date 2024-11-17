@@ -18,37 +18,47 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.connor.episode.models.HomeAction
+import com.connor.episode.ui.HOME
 import com.connor.episode.ui.HomeRoute
 import com.connor.episode.ui.theme.EpisodeTheme
 import com.connor.episode.utils.navigateTopTo
 import com.connor.episode.viewmodels.HomeViewModel
+import com.connor.episode.viewmodels.SerialPortViewModel
 
 @Composable
-fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
+    val serialPortViewModel: SerialPortViewModel = hiltViewModel()
     LaunchedEffect(state.currentRoute) {
         navController.navigateTopTo(state.currentRoute)
     }
     Home(
+        modifier = modifier,
         currentRoute = state.currentRoute,
         routes = state.routes,
         onAction = vm::onAction
     ) {
-        NavHost(navController = navController, startDestination = HomeRoute.startDestination) {
-            composable(HomeRoute.SerialPort.route) {
-                SerialPortScreen()
-            }
-            composable(HomeRoute.Tcp.route) {
-                TcpScreen()
-            }
-            composable(HomeRoute.Udp.route) {
-                UdpScreen()
-            }
-            composable(HomeRoute.WebSocket.route) {
-                WebSocketScreen()
+        NavHost(navController = navController, startDestination = HOME) {
+            navigation(
+                route = HOME,
+                startDestination = HomeRoute.SerialPort.route
+            ) {
+                composable(HomeRoute.SerialPort.route) {
+                    SerialPortScreen(serialPortViewModel)
+                }
+                composable(HomeRoute.Tcp.route) {
+                    TcpScreen()
+                }
+                composable(HomeRoute.Udp.route) {
+                    UdpScreen()
+                }
+                composable(HomeRoute.WebSocket.route) {
+                    WebSocketScreen()
+                }
             }
         }
     }
@@ -57,13 +67,14 @@ fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Home(
+    modifier: Modifier = Modifier,
     currentRoute: String = HomeRoute.startDestination,
     routes: List<HomeRoute> = HomeRoute.routes,
     onAction: (HomeAction) -> Unit = {},
     navHost: @Composable ColumnScope.() -> Unit = {}
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {

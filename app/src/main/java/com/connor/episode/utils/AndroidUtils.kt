@@ -36,8 +36,7 @@ fun NavHostController.navigateSingleTopTo(route: String) =
         restoreState = true
     }
 
-fun NavHostController.navigateTopTo(route: String) =
-    navigate(route) {
+fun NavHostController.navigateTopTo(route: String) = navigate(route) {
         popUpTo(0) {
             saveState = true
             inclusive = true
