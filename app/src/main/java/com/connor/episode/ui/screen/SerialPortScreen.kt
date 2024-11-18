@@ -2,30 +2,20 @@ package com.connor.episode.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,81 +31,54 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.connor.episode.models.Message
 import com.connor.episode.models.SerialPortAction
+import com.connor.episode.models.SerialPortState
 import com.connor.episode.ui.common.ChatMessageLazyColumn
 import com.connor.episode.ui.common.MessageBottomBar
 import com.connor.episode.ui.common.OutlineMenu
+import com.connor.episode.ui.common.TopBar
 import com.connor.episode.ui.theme.EpisodeTheme
 import com.connor.episode.viewmodels.SerialPortViewModel
 
 @Composable
 fun SerialPortScreen(vm: SerialPortViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
-    SerialPort(
-        message = state.message,
-        showMenu = state.showMenu,
-        onAction = vm::onAction
-    ) {
-        ChatMessageLazyColumn(
-            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
-            state.messages
-        )
-    }
-    SettingDialog(
-        show = state.showSetting,
-        currentSerialPort = state.serialPort,
-        serialPortMenus = state.serialPorts,
-        budaRate = state.baudRate,
-        onAction = vm::onAction
+    SerialPort(state, vm::onAction)
+    SettingDialog(state, vm::onAction
     )
 }
 
 @Composable
 private fun SerialPort(
-    message: String = "",
-    showMenu: Boolean = false,
-    onAction: (SerialPortAction) -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
+    state: SerialPortState = SerialPortState(
+        serialPort = "ttyS0",
+        isConnected = true,
+        messages = (0..5).map { Message(it.toString(), it % 2 == 0) }
+    ),
+    onAction: (SerialPortAction) -> Unit = {}
 ) {
+    val info = state.serialPort + " : " + state.baudRate
     Scaffold(
-        modifier = Modifier.imePadding(),
-        topBar = { TopBar(onAction = onAction, showMenu = showMenu) },
-        bottomBar = { BottomBar(msg = message, onAction = onAction) }
-    ) {
-        content(it)
-    }
-}
-
-@Composable
-private fun TopBar(
-    onAction: (SerialPortAction) -> Unit = {},
-    showMenu: Boolean = true
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.End
-    ) {
-        Column {
-            IconButton(onClick = { onAction(SerialPortAction.ShowMenu) }) {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
-            }
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { onAction(SerialPortAction.ShowMenu) }) {
-                DropdownMenuItem(
-                    text = { Text(text = "Setting") },
-                    onClick = { onAction(SerialPortAction.ShowSetting) },
-                    leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) }
-                )
-                DropdownMenuItem(
-                    text = { Text(text = "Clean log") },
-                    onClick = { onAction(SerialPortAction.CleanLog) },
-                    leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) }
-                )
-            }
+        topBar = {
+            TopBar(
+                isConnecting = state.isConnected,
+                connectInfo = info,
+                showMenu = state.showMenu,
+                onAction = onAction
+            )
+        },
+        bottomBar = {
+            BottomBar(
+                msg = state.message,
+                onAction = onAction
+            )
         }
+    ) {
+        ChatMessageLazyColumn(
+            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
+            state.messages
+        )
     }
 }
 
@@ -134,13 +97,10 @@ private fun BottomBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingDialog(
-    show: Boolean = true,
-    currentSerialPort: String = "",
-    budaRate: String = "9600",
-    serialPortMenus: List<String> = emptyList(),
+    state: SerialPortState = SerialPortState(),
     onAction: (SerialPortAction) -> Unit = {}
 ) {
-    if (!show) return
+    if (!state.showSetting) return
     BasicAlertDialog(
         onDismissRequest = { })
     {
@@ -168,8 +128,8 @@ fun SettingDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlineMenu(
-                    text = currentSerialPort,
-                    menus = serialPortMenus,
+                    text = state.serialPort,
+                    menus = state.serialPorts,
                     onClick = { onAction(SerialPortAction.SelectSerialPort(it)) }
                 )
                 Spacer(modifier = Modifier.height(18.dp))
@@ -180,7 +140,7 @@ fun SettingDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = budaRate,
+                    value = state.baudRate,
                     onValueChange = { s ->
                         onAction(
                             SerialPortAction.ChangeBaudRate(
@@ -219,9 +179,7 @@ fun SettingDialog(
 @Composable
 private fun Preview() {
     EpisodeTheme {
-        SerialPort {
-            ChatMessageLazyColumn()
-        }
+        SerialPort()
     }
 }
 

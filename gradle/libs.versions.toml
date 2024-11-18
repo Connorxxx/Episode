@@ -21,6 +21,7 @@ ktor = "2.3.11"
 arrow = "1.2.4"
 room = "2.6.1"
 material3 = "1.4.0-alpha04"
+materialIconsExtended = "1.7.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,7 +60,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 android-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore-preferences" }
-androidx-icons-extended = { group = "androidx.compose.material.icons.extended", name = "material-icons-extended" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 
 
 [plugins]

@@ -37,7 +37,7 @@ fun MessageBottomBar(
     ) {
         OutlinedTextField(
             value = msg,
-            modifier = Modifier.weight(4f),
+            modifier = Modifier.weight(1f),
             onValueChange = onValueChange,
             shape = RoundedCornerShape(45),
             keyboardOptions = KeyboardOptions(
@@ -58,7 +58,6 @@ fun MessageBottomBar(
         IconButton(
             onClick = onSend,
             modifier = Modifier
-                .weight(1f)
                 .padding(start = 6.dp)
         ) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)

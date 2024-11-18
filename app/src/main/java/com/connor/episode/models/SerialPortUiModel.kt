@@ -17,7 +17,6 @@ data class SerialPortState(
 )
 
 sealed interface SerialPortAction {
-    data class Open(val path: String, val baudRate: Int) : SerialPortAction
     data object Send : SerialPortAction
     data class WriteMsg(val msg: String) : SerialPortAction
     data object ShowMenu : SerialPortAction

@@ -1,7 +1,6 @@
 package com.connor.episode.repositorys
 
 import arrow.core.Option
-import arrow.core.flatMap
 import arrow.core.none
 import arrow.core.some
 import com.connor.episode.datasources.serialport.SerialPortSource
@@ -21,15 +20,13 @@ class SerialPortRepository @Inject constructor(
 
     fun open(path: String, baudRate: Int) = serialPortSource.open(path, baudRate).map {
         serialPort = it.some()
-    }
-
-    fun write(data: ByteArray) = getSerialPort().flatMap {
-        serialPortSource.write(it, data)
-    }
-
-    fun read() = getSerialPort().map {
         serialPortSource.read(it)
     }
+
+    fun write(data: ByteArray) {
+        serialPort.onSome { serialPortSource.write(it, data) }
+    }
+
 
     fun close() {
         serialPort.onSome {
