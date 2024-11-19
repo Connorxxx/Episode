@@ -13,16 +13,18 @@ data class SerialPortState(
     val resend: Boolean = false,
     val resendTime: Duration = 1.seconds,
     val showMenu: Boolean = false,
-    val showSetting: Boolean = false
+    val showSetting: Boolean = false,
+    val extraInfo: String = "",
 )
 
 sealed interface SerialPortAction {
     data object Send : SerialPortAction
     data class WriteMsg(val msg: String) : SerialPortAction
-    data object ShowMenu : SerialPortAction
+    data class IsShowMenu(val show: Boolean) : SerialPortAction
     data object CleanLog : SerialPortAction
-    data object ShowSetting : SerialPortAction
+    data object IsShowSetting : SerialPortAction
     data class SelectSerialPort(val path: String) : SerialPortAction
     data class ChangeBaudRate(val baudRate: String) : SerialPortAction
     data object ConfirmSetting : SerialPortAction
+    data object Close : SerialPortAction
 }

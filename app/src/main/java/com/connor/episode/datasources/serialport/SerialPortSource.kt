@@ -23,23 +23,26 @@ class SerialPortSource @Inject constructor() {
 
     fun open(path: String, baudRate: Int) = Either.catch {
         SerialPort(File(path), baudRate, 0)
-    }.mapLeft { SerialPortError.Open(it.message ?: "Serial Port Open Error") }
+    }.mapLeft { SerialPortError.Open(it.message ?: "Open Error") }
 
     fun write(serialPort: SerialPort, data: ByteArray) = Either.catch {
         serialPort.outputStream.write(data)
-    }.mapLeft { SerialPortError.Write(it.message ?: "Serial Port Write Error") }
+    }.mapLeft { SerialPortError.Write(it.message ?: "Write Error") }
 
     fun read(serialPort: SerialPort) = flow {
         val buffer = ByteArray(256)
         while (currentCoroutineContext().isActive) {
             val bytesRead = Either.catch { serialPort.inputStream.read(buffer) }
-                .mapLeft { SerialPortError.Read(it.message ?: "Serial Port Read Error") }
+                .mapLeft { SerialPortError.Read.IO(it.message ?: "Read Error") }
                 .flatMap {
-                    if (it > 0) it.right() else SerialPortError.Read("byte size <= 0").left()
+                    when (it) {
+                        -1 -> SerialPortError.Read.EndOfStream().left()
+                        0 -> SerialPortError.Read.NoData().left()
+                        else -> it.right()
+                    }
                 }
             val e = bytesRead.map { buffer.copyOfRange(0, it) }
             emit(e)
-            if (e.isLeft()) break
         }
     }.flowOn(Dispatchers.IO)
 }

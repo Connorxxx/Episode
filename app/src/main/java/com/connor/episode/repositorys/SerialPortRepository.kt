@@ -1,12 +1,21 @@
 package com.connor.episode.repositorys
 
 import arrow.core.Option
+import arrow.core.getOrElse
+import arrow.core.left
 import arrow.core.none
+import arrow.core.raise.either
 import arrow.core.some
 import com.connor.episode.datasources.serialport.SerialPortSource
 import com.connor.episode.errors.SerialPortError
 import jakarta.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withTimeout
 import serialport_api.SerialPort
+import kotlin.time.Duration.Companion.seconds
 
 class SerialPortRepository @Inject constructor(
     private val serialPortSource: SerialPortSource
@@ -18,13 +27,26 @@ class SerialPortRepository @Inject constructor(
 
     val getAllDevicesPath get() = serialPortSource.getAllDevicesPath
 
-    fun open(path: String, baudRate: Int) = serialPortSource.open(path, baudRate).map {
-        serialPort = it.some()
-        serialPortSource.read(it)
+    fun openAndRead(path: String, baudRate: Int) = flow {
+        serialPortSource.open(path, baudRate).map {
+            serialPort = it.some()
+            serialPortSource.read(it)
+        }.fold(
+            ifLeft = { emit(it.left()) },
+            ifRight = { emitAll(it) }
+        )
     }
 
-    fun write(data: ByteArray) {
-        serialPort.onSome { serialPortSource.write(it, data) }
+    fun testOpen(path: String, baudRate: Int) {
+        serialPortSource.open(path, baudRate).fold(
+            ifLeft = { println(it.msg) },
+            ifRight = { println("Open success") }
+        )
+    }
+
+    fun write(data: ByteArray) = either {
+        val serial = serialPort.getOrElse { raise(SerialPortError.Open("Serial port not opened")) }
+         serialPortSource.write(serial, data).bind()
     }
 
 
@@ -33,9 +55,5 @@ class SerialPortRepository @Inject constructor(
             it.close()
             serialPort = none()
         }
-    }
-
-    private fun getSerialPort() = serialPort.toEither {
-        SerialPortError.None("Serial Port Not Open, State: ${serialPort.isSome()}")
     }
 }

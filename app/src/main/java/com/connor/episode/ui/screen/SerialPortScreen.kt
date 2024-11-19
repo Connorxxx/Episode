@@ -1,5 +1,12 @@
 package com.connor.episode.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInQuart
+import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connor.episode.models.Message
@@ -45,8 +54,11 @@ import com.connor.episode.viewmodels.SerialPortViewModel
 fun SerialPortScreen(vm: SerialPortViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     SerialPort(state, vm::onAction)
-    SettingDialog(state, vm::onAction
+
+    SettingDialog(
+        state, vm::onAction
     )
+
 }
 
 @Composable
@@ -58,7 +70,8 @@ private fun SerialPort(
     ),
     onAction: (SerialPortAction) -> Unit = {}
 ) {
-    val info = state.serialPort + " : " + state.baudRate
+    val connectInfo = if (state.isConnected) "${state.serialPort} : ${state.baudRate}" else ""
+    val info = "$connectInfo  ${state.extraInfo}"
     Scaffold(
         topBar = {
             TopBar(
@@ -94,16 +107,45 @@ private fun BottomBar(
     )
 }
 
+@Composable
+fun Animated(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = showDialog,
+        enter = scaleIn(
+            initialScale = 0.0f,           // 从0开始
+            animationSpec = tween(         // 自定义动画时长和缓动
+                durationMillis = 30000,
+                easing = EaseOutQuart
+            )
+        ),
+        exit = scaleOut(
+            targetScale = 0.0f,            // 缩放到0
+            animationSpec = tween(
+                durationMillis = 30000,
+                easing = EaseInQuart
+            )
+        )
+    ) {
+        Dialog(onDismissRequest = onDismiss) {
+            Spacer(modifier = Modifier.height(100.dp)
+                .fillMaxWidth().background(MaterialTheme.colorScheme.error))
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingDialog(
-    state: SerialPortState = SerialPortState(),
+    state: SerialPortState = SerialPortState(showSetting = true),
     onAction: (SerialPortAction) -> Unit = {}
 ) {
     if (!state.showSetting) return
-    BasicAlertDialog(
-        onDismissRequest = { })
-    {
+    val enable = state.serialPort.isNotEmpty() && state.baudRate.isNotEmpty()
+
+    BasicAlertDialog(onDismissRequest = { }) {
         Surface(
             modifier = Modifier
                 .wrapContentWidth()
@@ -162,11 +204,18 @@ fun SettingDialog(
                         .defaultMinSize(minHeight = 48.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    OutlinedButton(onClick = { onAction(SerialPortAction.ShowSetting) }) {
+                    OutlinedButton(onClick = { onAction(SerialPortAction.IsShowSetting) }) {
                         Text(text = "Cancel", color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.padding(8.dp))
-                    Button(onClick = { onAction(SerialPortAction.ConfirmSetting) }) {
+                    Button(
+                        onClick = { onAction(SerialPortAction.ConfirmSetting) },
+                        enabled = enable,
+                        colors = ButtonDefaults.buttonColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.error,
+                            disabledContentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
                         Text(text = "OK")
                     }
                 }
