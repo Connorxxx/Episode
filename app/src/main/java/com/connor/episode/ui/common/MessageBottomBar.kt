@@ -1,6 +1,7 @@
 package com.connor.episode.ui.common
 
 import OutlinedTextField
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -52,8 +54,8 @@ import com.connor.episode.ui.theme.EpisodeTheme
 
 @Composable
 fun MessageBottomBar(
-   // msg: String = "",
-   // onValueChange: (String) -> Unit = {},
+    // msg: String = "",
+    // onValueChange: (String) -> Unit = {},
     onSend: (String) -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(true) }
@@ -70,7 +72,10 @@ fun MessageBottomBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { expanded = !expanded }) {
-                Icon(if (!expanded) Icons.Filled.GridView else Icons.Rounded.GridView, contentDescription = null)
+                Icon(
+                    if (!expanded) Icons.Filled.GridView else Icons.Rounded.GridView,
+                    contentDescription = null
+                )
             }
             OutlinedTextField(
                 value = msg,
@@ -106,31 +111,14 @@ fun MessageBottomBar(
                 val options = listOf("HEX", "ASCII")
                 var selected by remember { mutableStateOf(false) }
 
-              //  Spacer(modifier = Modifier.height(4.dp))
+                //  Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilterChip(
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        selected = selected,
-                        onClick = { selected = !selected },
-                        label = { Text("Resend", maxLines = 1) },
-                        leadingIcon =
-                            if (selected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Done,
-                                        contentDescription = "Localized Description",
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                    )
-                                }
-                            } else null
-                    )
-                    var count by remember { mutableIntStateOf(0) }
-                    NumberPicker(
-                        value = count,
-                        onValueChange = { count = it },
-                        modifier = Modifier
+                    Text(
+                        "Send format:",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Row(
@@ -146,8 +134,38 @@ fun MessageBottomBar(
                         }
                     }
                 }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterChip(
+                        modifier = Modifier.padding(horizontal = 8.dp).animateContentSize(),
+                        selected = selected,
+                        onClick = { selected = !selected },
+                        label = { Text("Resend", maxLines = 1) },
+                        leadingIcon =
+                            if (selected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Filled.Done,
+                                        contentDescription = "Localized Description",
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                }
+                            } else null
+                    )
+                    var count by remember { mutableIntStateOf(0) }
+                    Spacer(modifier = Modifier.weight(1f))
+                    AnimatedVisibility(visible = selected) {
+                        NumberPicker(
+                            value = count,
+                            onValueChange = { count = it },
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+
+                }
             }
-           // Spacer(modifier = Modifier.height(300.dp))
+            // Spacer(modifier = Modifier.height(300.dp))
         }
     }
 }

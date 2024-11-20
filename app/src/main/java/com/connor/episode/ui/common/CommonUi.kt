@@ -45,7 +45,7 @@ fun NumberPicker(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            modifier = Modifier.size(30.dp),
+           // modifier = Modifier.size(30.dp),
             onClick = {
                 if (value > range.first) onValueChange(value - 1)
             }
@@ -61,11 +61,11 @@ fun NumberPicker(
                     MaterialTheme.colorScheme.surfaceVariant,
                     RoundedCornerShape(12.dp)
                 )
-                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .padding(horizontal = 20.dp, vertical = 6.dp)
         )
 
         IconButton(
-            modifier = Modifier.size(30.dp),
+          //  modifier = Modifier.size(30.dp),
             onClick = {
                 if (value < range.last) onValueChange(value + 1)
             }
