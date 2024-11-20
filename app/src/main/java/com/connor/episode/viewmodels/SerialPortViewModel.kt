@@ -25,6 +25,7 @@ class SerialPortViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
+    private val _messages = MutableStateFlow(emptyList<Message>())
     val state = _state.asStateFlow()
 
     private var readJob: Job? = null
@@ -32,16 +33,19 @@ class SerialPortViewModel @Inject constructor(
     init {
         "ViewModel init ${hashCode()}".logCat()
         val list = if (BuildConfig.DEBUG && false) listOf("ttyS0", "ttyS1", "ttyS2", "ttyS3")
-        else serialPortRepository.getAllDevices.map {
-            it.replace("\\s\\(.*?\\)".toRegex(), "")
-        }.sortedWith(compareBy({ it.length }, { it }))
-        _state.update { it.copy(serialPorts = list, serialPort = list.firstOrNull() ?: "") }
+        else serialPortRepository.getAllDevices.sortedWith(compareBy({ it.length }, { it }))
+        _state.update {
+            it.copy(
+                serialPorts = list,
+                serialPort = list.firstOrNull()?.substringAfterLast("/") ?: ""
+            )
+        }
     }
 
     fun onAction(action: SerialPortAction) {
         when (action) {
-            SerialPortAction.Send -> {
-                if (_state.value.message.isEmpty() || !_state.value.isConnected) return
+            is SerialPortAction.Send -> {
+                if (action.msg.isEmpty() || !_state.value.isConnected) return
                 serialPortRepository.write(byteArrayOf(0x00, 0x01, 0x02, 0x03)).fold(
                     ifLeft = { err ->
                         _state.update {
@@ -51,42 +55,38 @@ class SerialPortViewModel @Inject constructor(
                     ifRight = {
                         _state.update {
                             it.copy(
-                                messages = it.messages + Message(it.message, true),
-                                message = "",
-                                extraInfo = ""
+                                messages = it.messages + Message(action.msg, true)
                             )
                         }
                     }
                 )
             }
 
-            is SerialPortAction.WriteMsg -> _state.update { it.copy(message = action.msg) }
-            is SerialPortAction.IsShowMenu -> _state.update { it.copy(showMenu = action.show) }
             SerialPortAction.CleanLog -> _state.update {
-                it.copy(
-                    messages = emptyList(),
-                    showMenu = false
-                )
+                it.copy(messages = emptyList())
             }
 
-            SerialPortAction.IsShowSetting -> _state.update { it.copy(showSetting = !it.showSetting, showMenu = false) }
-            is SerialPortAction.SelectSerialPort -> _state.update {
-                it.copy(serialPort = action.path)
+            SerialPortAction.IsShowSettingDialog -> _state.update {
+                it.copy(showSettingDialog = !it.showSettingDialog,)
             }
 
-            is SerialPortAction.ChangeBaudRate -> _state.update {
-                it.copy(baudRate = action.baudRate)
-            }
-
-            SerialPortAction.ConfirmSetting -> {
-                readJob = viewModelScope.open(_state.value.serialPort, _state.value.baudRate.toInt())
-                if (_state.value.serialPort.isEmpty()) return
-                _state.update { it.copy(showSetting = false, showMenu = false) }
+            is SerialPortAction.ConfirmSetting -> {
+                val path =
+                    _state.value.serialPorts.find { it.contains(action.serialPort) } ?: return
+                _state.update {
+                    it.copy(
+                        showSettingDialog = false,
+                        serialPort = action.serialPort,
+                        baudRate = action.baudRate
+                    )
+                }
+                readJob = viewModelScope.open(path, _state.value.baudRate.toInt())
+                //if (_state.value.serialPort.isEmpty()) return
             }
 
             SerialPortAction.Close -> {
-                _state.update{
-                    it.copy(isConnected = false, extraInfo = "Close", showMenu = false)
+                _state.update {
+                    it.copy(isConnected = false, extraInfo = "Close")
                 }
                 readJob?.cancel()
                 serialPortRepository.close()

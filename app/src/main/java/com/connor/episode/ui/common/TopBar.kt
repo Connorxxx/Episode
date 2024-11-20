@@ -18,33 +18,24 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.connor.episode.models.SerialPortAction
 import com.connor.episode.ui.theme.EpisodeTheme
-
-private val topBarMenus = listOf(
-    TopBarMenu("Setting", SerialPortAction.IsShowSetting, Icons.Outlined.Settings),
-    TopBarMenu("Clean log", SerialPortAction.CleanLog, Icons.Outlined.Delete),
-    TopBarMenu("Close", SerialPortAction.Close, Icons.Outlined.Close)
-)
-
-data class TopBarMenu(
-    val title: String,
-    val action: SerialPortAction,
-    val icon: ImageVector
-)
 
 @Composable
 fun TopBar(
     isConnecting: Boolean = false,
     connectInfo: String = "ttyS0 : 9600",
     onAction: (SerialPortAction) -> Unit = {},
-    showMenu: Boolean = true
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -57,26 +48,35 @@ fun TopBar(
         Text(text = connectInfo, style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.weight(1f))
         Column {
-            IconButton(onClick = { onAction(SerialPortAction.IsShowMenu(true)) }) {
+            IconButton(onClick = { showMenu = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = null)
             }
             DropdownMenu(
                 expanded = showMenu,
-                onDismissRequest = { onAction(SerialPortAction.IsShowMenu(false)) }
+                onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
                     text = { Text(text = "Setting") },
-                    onClick = { onAction(SerialPortAction.IsShowSetting) },
+                    onClick = {
+                        showMenu = false
+                        onAction(SerialPortAction.IsShowSettingDialog)
+                    },
                     leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "Clean log") },
-                    onClick = { onAction(SerialPortAction.CleanLog) },
+                    onClick = {
+                        showMenu = false
+                        onAction(SerialPortAction.CleanLog)
+                    },
                     leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) }
                 )
                 if (isConnecting) DropdownMenuItem(
                     text = { Text(text = "Close") },
-                    onClick = { onAction(SerialPortAction.Close) },
+                    onClick = {
+                        showMenu = false
+                        onAction(SerialPortAction.Close)
+                    },
                     leadingIcon = { Icon(Icons.Outlined.Close, contentDescription = null) }
                 )
             }

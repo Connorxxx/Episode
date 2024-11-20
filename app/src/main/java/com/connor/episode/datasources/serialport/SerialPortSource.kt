@@ -19,7 +19,7 @@ class SerialPortSource @Inject constructor() {
 
     val getAllDevices: Array<String> get() = SerialPortFinder().allDevices
 
-    val getAllDevicesPath: Array<String> get() = SerialPortFinder().allDevices
+    val getAllDevicesPath: Array<String> get() = SerialPortFinder().allDevicesPath
 
     fun open(path: String, baudRate: Int) = Either.catch {
         SerialPort(File(path), baudRate, 0)
