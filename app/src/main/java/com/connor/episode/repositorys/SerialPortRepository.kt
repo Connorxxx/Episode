@@ -9,13 +9,9 @@ import arrow.core.some
 import com.connor.episode.datasources.serialport.SerialPortSource
 import com.connor.episode.errors.SerialPortError
 import jakarta.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withTimeout
 import serialport_api.SerialPort
-import kotlin.time.Duration.Companion.seconds
 
 class SerialPortRepository @Inject constructor(
     private val serialPortSource: SerialPortSource

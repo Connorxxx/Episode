@@ -25,7 +25,6 @@ class SerialPortViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
-    private val _messages = MutableStateFlow(emptyList<Message>())
     val state = _state.asStateFlow()
 
     private var readJob: Job? = null
@@ -71,8 +70,10 @@ class SerialPortViewModel @Inject constructor(
             }
 
             is SerialPortAction.ConfirmSetting -> {
-                val path =
-                    _state.value.serialPorts.find { it.contains(action.serialPort) } ?: return
+                if (_state.value.serialPort == action.serialPort &&
+                    _state.value.baudRate == action.baudRate &&
+                    _state.value.isConnected) return
+                val path = _state.value.serialPorts.find { it.contains(action.serialPort) } ?: return
                 _state.update {
                     it.copy(
                         showSettingDialog = false,
@@ -80,6 +81,7 @@ class SerialPortViewModel @Inject constructor(
                         baudRate = action.baudRate
                     )
                 }
+                if (readJob?.isActive == true) readJob?.cancel()
                 readJob = viewModelScope.open(path, _state.value.baudRate.toInt())
                 //if (_state.value.serialPort.isEmpty()) return
             }
@@ -91,6 +93,11 @@ class SerialPortViewModel @Inject constructor(
                 readJob?.cancel()
                 serialPortRepository.close()
             }
+
+            is SerialPortAction.ReceiveFormatSelect -> _state.update { it.copy(receiveFormatIdx = action.idx)  }
+            is SerialPortAction.SendFormatSelect -> _state.update { it.copy(sendFormatIdx = action.idx)  }
+            SerialPortAction.Resend -> _state.update { it.copy(resend = !it.resend) }
+            is SerialPortAction.ResendSeconds -> _state.update { it.copy(resendSeconds = action.seconds) }
         }
     }
 

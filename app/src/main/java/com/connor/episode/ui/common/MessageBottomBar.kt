@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,24 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.ViewCozy
-import androidx.compose.material.icons.outlined.ViewCozy
 import androidx.compose.material.icons.rounded.GridView
-import androidx.compose.material.icons.rounded.ViewCozy
-import androidx.compose.material.icons.sharp.ViewCozy
-import androidx.compose.material.icons.twotone.ViewCozy
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,11 +42,18 @@ import com.connor.episode.ui.theme.EpisodeTheme
 
 @Composable
 fun MessageBottomBar(
-    // msg: String = "",
-    // onValueChange: (String) -> Unit = {},
-    onSend: (String) -> Unit = {},
+    sendSelectIdx: Int = 0,
+    receiveSelectIdx: Int = 0,
+    isResend: Boolean = false,
+    resendSeconds: Int = 1,
+    onSendMessage: (String) -> Unit = {},
+    onSendFormatSelect: (Int) -> Unit = {},
+    onReceiveFormatSelect: (Int) -> Unit = {},
+    onResend: () -> Unit = {},
+    onResendSeconds: (Int) -> Unit = {}
+
 ) {
-    var expanded by remember { mutableStateOf(true) }
+    var expanded by remember { mutableStateOf(false) }
     var msg by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
@@ -93,12 +88,12 @@ fun MessageBottomBar(
                     )
                 },
                 keyboardActions = KeyboardActions(
-                    onSend = { onSend(msg) }
+                    onSend = { onSendMessage(msg) }
                 ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             )
             IconButton(
-                onClick = { onSend(msg) },
+                onClick = { onSendMessage(msg) },
                 modifier = Modifier
                     .padding(start = 6.dp)
             ) {
@@ -107,43 +102,31 @@ fun MessageBottomBar(
         }
         if (expanded) {
             Column {
-                var selectedIndex by remember { mutableIntStateOf(0) }
                 val options = listOf("HEX", "ASCII")
-                var selected by remember { mutableStateOf(false) }
-
-                //  Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Send format:",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        options.forEachIndexed { index, option ->
-                            FilterChip(
-                                selected = index == selectedIndex,
-                                onClick = { selectedIndex = index },
-                                label = { Text(option, maxLines = 1) }
-                            )
-                        }
-                    }
-                }
+                FormatType(
+                    text = "Send format:",
+                    options,
+                    sendSelectIdx,
+                    onSelected = { onSendFormatSelect(it) }
+                )
+                Spacer(modifier = Modifier.padding(4.dp))
+                FormatType(
+                    text = "Receive format:",
+                    options,
+                    receiveSelectIdx,
+                    onSelected = { onReceiveFormatSelect(it) }
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     FilterChip(
                         modifier = Modifier.padding(horizontal = 8.dp).animateContentSize(),
-                        selected = selected,
-                        onClick = { selected = !selected },
+                        selected = isResend,
+                        onClick = onResend,
                         label = { Text("Resend", maxLines = 1) },
                         leadingIcon =
-                            if (selected) {
+                            if (isResend) {
                                 {
                                     Icon(
                                         imageVector = Icons.Filled.Done,
@@ -153,19 +136,50 @@ fun MessageBottomBar(
                                 }
                             } else null
                     )
-                    var count by remember { mutableIntStateOf(0) }
                     Spacer(modifier = Modifier.weight(1f))
-                    AnimatedVisibility(visible = selected) {
+                    AnimatedVisibility(visible = isResend) {
                         NumberPicker(
-                            value = count,
-                            onValueChange = { count = it },
+                            value = resendSeconds,
+                            onValueChange = { onResendSeconds(it) },
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
 
                 }
+                Spacer(modifier = Modifier.padding(4.dp))
             }
             // Spacer(modifier = Modifier.height(300.dp))
+        }
+    }
+}
+
+@Composable
+private fun FormatType(
+    text: String = "Send format:",
+    options: List<String>,
+    selectedIndex: Int,
+    onSelected: (Int) -> Unit = {}
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp)
+        ) {
+            options.forEachIndexed { index, option ->
+                FilterChip(
+                    selected = index == selectedIndex,
+                    onClick = { onSelected(index) },
+                    label = { Text(option, maxLines = 1) }
+                )
+            }
         }
     }
 }

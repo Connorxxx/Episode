@@ -75,8 +75,16 @@ private fun SerialPort(
             )
         },
         bottomBar = {
-            BottomBar(
-                onAction = onAction
+            MessageBottomBar(
+                sendSelectIdx = state.sendFormatIdx,
+                receiveSelectIdx = state.receiveFormatIdx,
+                isResend = state.resend,
+                resendSeconds = state.resendSeconds,
+                onSendMessage = { onAction(SerialPortAction.Send(it)) },
+                onSendFormatSelect = { onAction(SerialPortAction.SendFormatSelect(it)) },
+                onReceiveFormatSelect = { onAction(SerialPortAction.ReceiveFormatSelect(it)) },
+                onResend = { onAction(SerialPortAction.Resend) },
+                onResendSeconds = { onAction(SerialPortAction.ResendSeconds(it)) }
             )
         }
     ) {
@@ -85,15 +93,6 @@ private fun SerialPort(
             state.messages
         )
     }
-}
-
-@Composable
-private fun BottomBar(
-    onAction: (SerialPortAction) -> Unit = {}
-) {
-    MessageBottomBar(
-        onSend = { onAction(SerialPortAction.Send(it)) }
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
