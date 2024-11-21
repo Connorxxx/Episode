@@ -5,12 +5,21 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.connor.episode.App
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.serializer
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.properties.ReadOnlyProperty
 
 fun Any.logCat(tab: String = "Episode") {
     // if (!BuildConfig.DEBUG) return
@@ -59,4 +68,32 @@ fun LocalDateTime.formatSmartly(): String {
             this.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"))
         }
     }
+}
+
+/**
+ * 确保 T 数据类标注 @Serializable
+ */
+@OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T : Any> protobufDataStore(
+    fileName: String,
+    defaultValue: T,
+): ReadOnlyProperty<Context, DataStore<T>> {
+    val v = defaultValue
+
+    val serializer = object : Serializer<T> {
+
+        override val defaultValue: T = v
+
+        override suspend fun readFrom(input: InputStream): T {
+            return ProtoBuf.decodeFromByteArray(serializer(),input.readBytes())
+        }
+
+        override suspend fun writeTo(t: T, output: OutputStream) {
+            ProtoBuf.encodeToByteArray(serializer(),t).also {
+                output.write(it)
+                output.flush()
+            }
+        }
+    }
+    return dataStore(fileName, serializer)
 }
