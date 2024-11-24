@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.connor.episode.ui.screen.HomeScreen
+import com.connor.episode.features.home.HomeScreen
 import com.connor.episode.ui.theme.EpisodeTheme
 import dagger.hilt.android.AndroidEntryPoint
 

@@ -1,6 +1,8 @@
 package com.connor.episode.test
 
 import arrow.core.Either
+import com.connor.episode.core.utils.asciiToHexString
+import com.connor.episode.core.utils.hexStringToAscii
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -9,11 +11,17 @@ import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalStdlibApi::class)
 fun main(): Unit = runBlocking {
-    test().collect {
-        println(it)
-    }
+    val bytes = "Hello world".toByteArray(Charsets.US_ASCII)
+    val myway = "H w".asciiToHexString()
+    val hexToAscii = "48 20 77 DD DD FF FC".hexStringToAscii()
+    println(bytes.toHexString())
+    println(myway)
+    println(hexToAscii)
 }
+
+
 
 
 fun test() = flow {

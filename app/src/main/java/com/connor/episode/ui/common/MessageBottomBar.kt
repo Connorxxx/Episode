@@ -3,6 +3,7 @@ package com.connor.episode.ui.common
 import OutlinedTextField
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,11 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.rounded.GridView
@@ -25,6 +26,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.connor.episode.ui.theme.EpisodeTheme
@@ -50,11 +53,11 @@ fun MessageBottomBar(
     onSendFormatSelect: (Int) -> Unit = {},
     onReceiveFormatSelect: (Int) -> Unit = {},
     onResend: () -> Unit = {},
-    onResendSeconds: (Int) -> Unit = {}
-
+    onResendSeconds: (Int) -> Unit = {},
+    message: TextFieldValue = TextFieldValue(""),
+    onMessageChange: (TextFieldValue) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var msg by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,27 +76,40 @@ fun MessageBottomBar(
                 )
             }
             OutlinedTextField(
-                value = msg,
+                value = message,
                 modifier = Modifier.weight(1f),
-                onValueChange = { msg = it },
-                shape = RoundedCornerShape(45),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
+                ),
+                onValueChange = { onMessageChange(it) },
+                //shape = RoundedCornerShape(6.dp),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Send
                 ),
                 placeholder = {
                     Text(
-                        text = "write a message...", style = TextStyle(
+                        text = "Write a ${if (sendSelectIdx == 0) "HEX" else "ASCII"} message...",
+                        style = TextStyle(
                             color = Color.Gray,
                         )
                     )
                 },
+                suffix = {
+                    if (message.text.isNotEmpty())
+                        Icon(modifier = Modifier.clickable(
+                            onClick = { onMessageChange(TextFieldValue("")) }
+                        ), imageVector = Icons.Filled.Close, contentDescription = null)
+                },
                 keyboardActions = KeyboardActions(
-                    onSend = { onSendMessage(msg) }
+                    onSend = { onSendMessage(message.text) }
                 ),
+                maxLines = 4,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             )
+            //PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             IconButton(
-                onClick = { onSendMessage(msg) },
+                onClick = { onSendMessage(message.text) },
                 modifier = Modifier
                     .padding(start = 6.dp)
             ) {
@@ -121,7 +137,9 @@ fun MessageBottomBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     FilterChip(
-                        modifier = Modifier.padding(horizontal = 8.dp).animateContentSize(),
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .animateContentSize(),
                         selected = isResend,
                         onClick = onResend,
                         label = { Text("Resend", maxLines = 1) },

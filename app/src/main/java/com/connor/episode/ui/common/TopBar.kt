@@ -26,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.connor.episode.models.SerialPortAction
+import com.connor.episode.features.serial.SerialPortAction
 import com.connor.episode.ui.theme.EpisodeTheme
 
 @Composable
