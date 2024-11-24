@@ -10,8 +10,9 @@ import com.connor.episode.BuildConfig
 import com.connor.episode.data.local.database.dao.MessageDao
 import com.connor.episode.data.local.database.entity.MessageEntity
 import com.connor.episode.data.local.datastore.PreferencesModule
-import com.connor.episode.data.local.datastore.preference.SerialPortPreferences
 import com.connor.episode.data.mapper.toMessage
+import com.connor.episode.data.mapper.toModel
+import com.connor.episode.data.mapper.toPreferences
 import com.connor.episode.data.remote.serial.SerialPortSource
 import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.SerialPortModel
@@ -47,13 +48,13 @@ class SerialPortRepositoryImpl @Inject constructor(
             messages = messages,
             resend = serialPref.resend,
             resendSeconds = serialPref.resendSeconds,
-            sendFormat = serialPref.sendFormatIdx,
-            receiveFormat = serialPref.receiveFormatIdx
+            sendFormat = serialPref.sendFormat,
+            receiveFormat = serialPref.receiveFormat
         )
     }
 
-    override suspend fun updatePreferences(preferences: SerialPortPreferences) =
-        serialPref.updateData { preferences }
+    override suspend fun updatePreferences(model: SerialPortModel) =
+        serialPref.updateData { model.toPreferences() }.toModel()
 
 
     override suspend fun addMessage(message: String, isMe: Boolean) {

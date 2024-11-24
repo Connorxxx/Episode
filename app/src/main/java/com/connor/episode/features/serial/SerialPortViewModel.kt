@@ -9,12 +9,13 @@ import com.connor.episode.core.utils.filterHex
 import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.hexStringToByteArray
 import com.connor.episode.core.utils.logCat
-import com.connor.episode.data.local.datastore.preference.SerialPortPreferences
+import com.connor.episode.data.mapper.toModel
 import com.connor.episode.data.mapper.toPreferences
 import com.connor.episode.data.mapper.toUiState
 import com.connor.episode.data.mapper.updateFromPref
 import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.Message
+import com.connor.episode.domain.model.SerialPortModel
 import com.connor.episode.domain.repository.SerialPortRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -67,7 +68,7 @@ class SerialPortViewModel @Inject constructor(
             }
 
             is SerialPortAction.ReceiveFormatSelect -> updatePreferences { preferences ->
-                preferences.copy(receiveFormatIdx = action.idx)
+                preferences.copy(receiveFormat = action.idx)
             }
 
             is SerialPortAction.SendFormatSelect -> sendFormatSelect(action)
@@ -81,7 +82,7 @@ class SerialPortViewModel @Inject constructor(
             }
 
             is SerialPortAction.OnMessageChange -> {
-                val msg = if (_state.value.sendFormatIdx == 0) {
+                val msg = if (_state.value.sendFormat == 0) {
                     val text = filterHex(_state.value.message.text, action.msg.text)
                     TextFieldValue(
                         text = text,
@@ -96,7 +97,7 @@ class SerialPortViewModel @Inject constructor(
     }
 
     private fun sendFormatSelect(action: SerialPortAction.SendFormatSelect) {
-        if (_state.value.sendFormatIdx == action.idx) return
+        if (_state.value.sendFormat == action.idx) return
         val text = _state.value.message.text
         if (action.idx == 0) {
             val text = text.asciiToHexString()
@@ -121,13 +122,13 @@ class SerialPortViewModel @Inject constructor(
             }
         }
         updatePreferences { preferences ->
-            preferences.copy(sendFormatIdx = action.idx)
+            preferences.copy(sendFormat = action.idx)
         }
     }
 
     private fun send(action: SerialPortAction.Send) {
         if (action.msg.isEmpty() || !_state.value.isConnected) return
-        val bytesMsg = if (_state.value.sendFormatIdx == 0) action.msg.hexStringToByteArray()
+        val bytesMsg = if (_state.value.sendFormat == 0) action.msg.hexStringToByteArray()
         else action.msg.toByteArray(Charsets.US_ASCII)
         serialPortRepository.write(bytesMsg).fold(
             ifLeft = { err ->
@@ -165,10 +166,10 @@ class SerialPortViewModel @Inject constructor(
         readJob = viewModelScope.open(path, _state.value.baudRate.toInt())
     }
 
-    private fun updatePreferences(pref: (SerialPortPreferences) -> SerialPortPreferences) =
+    private fun updatePreferences(pref: (SerialPortModel) -> SerialPortModel) =
         viewModelScope.launch {
-            val pref = serialPortRepository.updatePreferences(pref(_state.value.toPreferences()))
-            _state.update { it.updateFromPref(pref) }
+            val pref = serialPortRepository.updatePreferences(pref(_state.value.toModel()))
+            _state.update { it.updateFromPref(pref.toPreferences()) }
         }
 
     @OptIn(ExperimentalStdlibApi::class)

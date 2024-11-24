@@ -11,18 +11,20 @@ fun SerialPortModel.toUiState() = SerialPortState(
     messages = messages,
     resend = resend,
     resendSeconds = resendSeconds,
-    sendFormatIdx = sendFormat,
-    receiveFormatIdx = receiveFormat,
+    sendFormat = sendFormat,
+    receiveFormat = receiveFormat,
     extraInfo = if (serialPorts.isEmpty()) "No Serial Ports Found" else "Closed"
 )
 
-fun SerialPortState.toPreferences() = SerialPortPreferences(
+fun SerialPortState.toModel() = SerialPortModel(
+    serialPorts = serialPorts,
     serialPort = serialPort,
     baudRate = baudRate,
+    messages = messages,
     resend = resend,
     resendSeconds = resendSeconds,
-    sendFormatIdx = sendFormatIdx,
-    receiveFormatIdx = receiveFormatIdx
+    sendFormat = sendFormat,
+    receiveFormat = receiveFormat
 )
 
 fun SerialPortState.updateFromPref(preferences: SerialPortPreferences) = copy(
@@ -30,6 +32,6 @@ fun SerialPortState.updateFromPref(preferences: SerialPortPreferences) = copy(
     baudRate = preferences.baudRate,
     resend = preferences.resend,
     resendSeconds = preferences.resendSeconds,
-    sendFormatIdx = preferences.sendFormatIdx,
-    receiveFormatIdx = preferences.receiveFormatIdx
+    sendFormat = preferences.sendFormat,
+    receiveFormat = preferences.receiveFormat
 )

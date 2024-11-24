@@ -8,6 +8,6 @@ data class SerialPortPreferences(
     val baudRate: String = "9600",
     val resend: Boolean = false,
     val resendSeconds: Int = 1,
-    val sendFormatIdx: Int = 0,
-    val receiveFormatIdx: Int = 0
+    val sendFormat: Int = 0,
+    val receiveFormat: Int = 0
 )

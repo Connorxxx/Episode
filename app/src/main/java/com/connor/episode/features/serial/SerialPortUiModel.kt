@@ -15,8 +15,8 @@ data class SerialPortState(
     val resendSeconds: Int = 1,
     val showSettingDialog: Boolean = false,
     val extraInfo: String = "Close",
-    val sendFormatIdx: Int = 0,
-    val receiveFormatIdx: Int = 0,
+    val sendFormat: Int = 0,
+    val receiveFormat: Int = 0,
     val message: TextFieldValue = TextFieldValue("")
 )
 

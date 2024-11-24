@@ -46,8 +46,8 @@ private fun SerialPort(
         },
         bottomBar = {
             MessageBottomBar(
-                sendSelectIdx = state.sendFormatIdx,
-                receiveSelectIdx = state.receiveFormatIdx,
+                sendSelectIdx = state.sendFormat,
+                receiveSelectIdx = state.receiveFormat,
                 isResend = state.resend,
                 resendSeconds = state.resendSeconds,
                 message = state.message,
