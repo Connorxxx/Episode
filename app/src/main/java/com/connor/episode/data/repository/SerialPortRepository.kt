@@ -15,17 +15,18 @@ import com.connor.episode.data.mapper.toMessage
 import com.connor.episode.data.remote.serial.SerialPortSource
 import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.SerialPortModel
+import com.connor.episode.domain.repository.SerialPortRepository
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import serialport_api.SerialPort
 
-class SerialPortRepository @Inject constructor(
+class SerialPortRepositoryImpl @Inject constructor(
     private val serialPortSource: SerialPortSource,
     private val preferencesModule: PreferencesModule,
     private val messageDao: MessageDao
-) {
+) : SerialPortRepository {
 
     private var serialPort: Option<SerialPort> = none()
 
@@ -35,7 +36,7 @@ class SerialPortRepository @Inject constructor(
 
     private val serialPref = preferencesModule.serialPref
 
-    suspend fun getSerialPortModel(): SerialPortModel {
+    override suspend fun getSerialPortModel(): SerialPortModel {
         val list = if (BuildConfig.DEBUG) listOf("ttyS0", "ttyS1", "ttyS2", "ttyS3") else getAllDevicesPath
         val serialPref = preferencesModule.serialPref.data.first()
         val messages = messageDao.getAllMessages().first().map { it.toMessage() }
@@ -51,19 +52,19 @@ class SerialPortRepository @Inject constructor(
         )
     }
 
-    suspend fun updatePreferences(preferences: SerialPortPreferences) =
+    override suspend fun updatePreferences(preferences: SerialPortPreferences) =
         serialPref.updateData { preferences }
 
 
-    suspend fun addMessage(message: String, isMe: Boolean) {
+    override suspend fun addMessage(message: String, isMe: Boolean) {
         messageDao.insertMessage(MessageEntity(content = message, isMe = isMe))
     }
 
-    suspend fun deleteAllMessages() {
+    override suspend fun deleteAllMessages() {
         messageDao.deleteAllMessages()
     }
 
-    fun openAndRead(path: String, baudRate: Int) = flow {
+    override fun openAndRead(path: String, baudRate: Int) = flow {
         serialPortSource.open(path, baudRate).map {
             serialPort = it.some()
             serialPortSource.read(it)
@@ -73,12 +74,12 @@ class SerialPortRepository @Inject constructor(
         )
     }
 
-    fun write(data: ByteArray) = either {
+    override fun write(data: ByteArray) = either {
         val serial = serialPort.getOrElse { raise(SerialPortError.Open("Serial port not opened")) }
         serialPortSource.write(serial, data).bind()
     }
 
-    fun close() {
+    override fun close() {
         serialPort.onSome {
             it.close()
             serialPort = none()

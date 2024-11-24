@@ -13,9 +13,9 @@ import com.connor.episode.data.local.datastore.preference.SerialPortPreferences
 import com.connor.episode.data.mapper.toPreferences
 import com.connor.episode.data.mapper.toUiState
 import com.connor.episode.data.mapper.updateFromPref
-import com.connor.episode.data.repository.SerialPortRepository
 import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.Message
+import com.connor.episode.domain.repository.SerialPortRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
