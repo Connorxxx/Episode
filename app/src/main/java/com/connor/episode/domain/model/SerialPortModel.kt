@@ -2,7 +2,7 @@ package com.connor.episode.domain.model
 
 import java.time.LocalDateTime
 
-data class SerialPort(
+data class SerialPortModel(
     val serialPorts: List<String> = emptyList(),
     val serialPort: String = "",
     val baudRate: String = "9600",

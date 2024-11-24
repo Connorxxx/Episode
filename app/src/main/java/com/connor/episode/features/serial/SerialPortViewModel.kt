@@ -4,14 +4,15 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.connor.episode.BuildConfig
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.filterHex
 import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.hexStringToByteArray
 import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.local.datastore.preference.SerialPortPreferences
-import com.connor.episode.data.repository.PreferencesRepository
+import com.connor.episode.data.mapper.toPreferences
+import com.connor.episode.data.mapper.toUiState
+import com.connor.episode.data.mapper.updateFromPref
 import com.connor.episode.data.repository.SerialPortRepository
 import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.Message
@@ -21,8 +22,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +29,6 @@ import javax.inject.Inject
 @HiltViewModel
 class SerialPortViewModel @Inject constructor(
     private val serialPortRepository: SerialPortRepository,
-    private val preferencesRepository: PreferencesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
@@ -40,28 +38,17 @@ class SerialPortViewModel @Inject constructor(
 
     init {
         "ViewModel init ${hashCode()}".logCat()
-        val list = if (BuildConfig.DEBUG) listOf("ttyS0", "ttyS1", "ttyS2", "ttyS3")
-        else serialPortRepository.getAllDevices.sortedWith(compareBy({ it.length }, { it }))
-        _state.update {
-            it.copy(
-                serialPorts = list,
-                extraInfo = if (list.isEmpty()) "No Serial Ports Found" else "Closed"
-            )
-        }
-        preferencesRepository.serialPref.data.onEach { preferences ->
-            "SerialPreferences: $preferences".logCat()
-            _state.update {
-                it.update(preferences)
+        viewModelScope.launch {
+            serialPortRepository.getSerialPortModel().toUiState().also { state ->
+                _state.update { state }
             }
-        }.launchIn(viewModelScope)
-
-
+        }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     fun onAction(action: SerialPortAction) {
         when (action) {
-            is SerialPortAction.Send -> ::send
+            is SerialPortAction.Send -> send(action)
 
             SerialPortAction.CleanLog -> _state.update {
                 it.copy(messages = emptyList())
@@ -83,35 +70,7 @@ class SerialPortViewModel @Inject constructor(
                 preferences.copy(receiveFormatIdx = action.idx)
             }
 
-            is SerialPortAction.SendFormatSelect -> {
-                if (_state.value.sendFormatIdx == action.idx) return
-                val text = _state.value.message.text
-                if (action.idx == 0) {
-                    val text = text.asciiToHexString()
-                    _state.update {
-                        it.copy(
-                            message = TextFieldValue(
-                                text = text,
-                                selection = TextRange(text.length)
-                            )
-                        )
-                    }
-                } else {
-                    if (text.replace("\\s+".toRegex(), "").length %2 != 0) return
-                    val text = text.replace("\\s+".toRegex(), "").hexStringToAscii()
-                    _state.update {
-                        it.copy(
-                            message = TextFieldValue(
-                                text = text,
-                                selection = TextRange(text.length)
-                            )
-                        )
-                    }
-                }
-                updatePreferences { preferences ->
-                    preferences.copy(sendFormatIdx = action.idx)
-                }
-            }
+            is SerialPortAction.SendFormatSelect -> sendFormatSelect(action)
 
             SerialPortAction.Resend -> updatePreferences { preferences ->
                 preferences.copy(resend = !preferences.resend)
@@ -133,6 +92,36 @@ class SerialPortViewModel @Inject constructor(
                     state.copy(message = msg)
                 }
             }
+        }
+    }
+
+    private fun sendFormatSelect(action: SerialPortAction.SendFormatSelect) {
+        if (_state.value.sendFormatIdx == action.idx) return
+        val text = _state.value.message.text
+        if (action.idx == 0) {
+            val text = text.asciiToHexString()
+            _state.update {
+                it.copy(
+                    message = TextFieldValue(
+                        text = text,
+                        selection = TextRange(text.length)
+                    )
+                )
+            }
+        } else {
+            if (text.replace("\\s+".toRegex(), "").length % 2 != 0) return
+            val text = text.replace("\\s+".toRegex(), "").hexStringToAscii()
+            _state.update {
+                it.copy(
+                    message = TextFieldValue(
+                        text = text,
+                        selection = TextRange(text.length)
+                    )
+                )
+            }
+        }
+        updatePreferences { preferences ->
+            preferences.copy(sendFormatIdx = action.idx)
         }
     }
 
@@ -178,7 +167,8 @@ class SerialPortViewModel @Inject constructor(
 
     private fun updatePreferences(pref: (SerialPortPreferences) -> SerialPortPreferences) =
         viewModelScope.launch {
-            preferencesRepository.serialPref.updateData { pref(_state.value.toPreferences()) }
+            val pref = serialPortRepository.updatePreferences(pref(_state.value.toPreferences()))
+            _state.update { it.updateFromPref(pref) }
         }
 
     @OptIn(ExperimentalStdlibApi::class)
