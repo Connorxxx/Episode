@@ -13,14 +13,12 @@ import com.connor.episode.data.mapper.toModel
 import com.connor.episode.data.mapper.toPreferences
 import com.connor.episode.data.mapper.toUiState
 import com.connor.episode.data.mapper.updateFromPref
-import com.connor.episode.domain.error.SerialPortError
 import com.connor.episode.domain.model.Message
 import com.connor.episode.domain.model.SerialPortModel
-import com.connor.episode.domain.repository.SerialPortRepository
+import com.connor.episode.domain.usecase.GetSerialModelUseCase
+import com.connor.episode.domain.usecase.OpenReadSerialUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,7 +27,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SerialPortViewModel @Inject constructor(
-    private val serialPortRepository: SerialPortRepository,
+    private val getSerialModelUseCase: GetSerialModelUseCase,
+    private val openReadSerialUseCase: OpenReadSerialUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
@@ -40,13 +39,12 @@ class SerialPortViewModel @Inject constructor(
     init {
         "ViewModel init ${hashCode()}".logCat()
         viewModelScope.launch {
-            serialPortRepository.getSerialPortModel().toUiState().also { state ->
+            getSerialModelUseCase().toUiState().also { state ->
                 _state.update { state }
             }
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun onAction(action: SerialPortAction) {
         when (action) {
             is SerialPortAction.Send -> send(action)
@@ -146,57 +144,30 @@ class SerialPortViewModel @Inject constructor(
         )
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun confirm(action: SerialPortAction.ConfirmSetting) {
         if (_state.value.serialPort == action.serialPort &&
             _state.value.baudRate == action.baudRate &&
             _state.value.isConnected
         ) return
-        val path =
-            _state.value.serialPorts.find { it.contains(action.serialPort) } ?: return
-        _state.update {
-            it.copy(showSettingDialog = false)
-        }
-        updatePreferences { preferences ->
-            preferences.copy(
-                serialPort = action.serialPort,
-                baudRate = action.baudRate
-            )
-        }
+        _state.update { it.copy(showSettingDialog = false) }
         if (readJob?.isActive == true) readJob?.cancel()
-        readJob = viewModelScope.open(path, _state.value.baudRate.toInt())
+        readJob = viewModelScope.launch {
+            openReadSerialUseCase(
+                model = _state.value.toModel().copy(serialPort = action.serialPort, baudRate = action.baudRate),
+            ).collect {
+                val state = it.fold(
+                    ifLeft = { err -> state.value.copy(isConnected = !err.isFatal, extraInfo = err.msg) },
+                    ifRight = { bytes -> state.value.copy(messages = state.value.messages + Message(bytes.toHexString(), false)) }
+                )
+                _state.update { state }
+            }
+        }
     }
 
     private fun updatePreferences(pref: (SerialPortModel) -> SerialPortModel) =
         viewModelScope.launch {
-            val pref = serialPortRepository.updatePreferences(pref(_state.value.toModel()))
-            _state.update { it.updateFromPref(pref.toPreferences()) }
+            val pref = serialPortRepository.updatePreferences(pref(_state.value.toModel())).toPreferences()
+            _state.update { it.updateFromPref(pref) }
         }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun CoroutineScope.open(path: String = "/dev/ttyS0", baudRate: Int = 9600) = launch {
-        _state.update { it.copy(isConnected = true, extraInfo = "Connected") }
-        serialPortRepository.openAndRead(path, baudRate).collect { reader ->
-            reader.fold(
-                ifLeft = { err ->
-                    err.msg.logCat()
-                    when (err) {
-                        is SerialPortError.Open,
-                        is SerialPortError.Read.EndOfStream,
-                        is SerialPortError.Read.IO -> {
-                            _state.update { it.copy(isConnected = false, extraInfo = err.msg) }
-                            serialPortRepository.close()
-                            cancel()
-                        }
-
-                        else -> _state.update { it.copy(extraInfo = err.msg) }
-                    }
-                },
-                ifRight = {
-                    _state.update { state ->
-                        state.copy(messages = state.messages + Message(it.toHexString(), false))
-                    }
-                }
-            )
-        }
-    }
 }

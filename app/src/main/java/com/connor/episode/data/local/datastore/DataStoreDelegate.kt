@@ -1,4 +1,4 @@
-package com.connor.episode.core.datastore
+package com.connor.episode.data.local.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore

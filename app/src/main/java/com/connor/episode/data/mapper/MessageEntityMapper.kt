@@ -8,3 +8,9 @@ fun MessageEntity.toMessage() = Message(
     isMe = isMe,
     time = time
 )
+
+fun Message.toEntity() = MessageEntity(
+    content = content,
+    isMe = isMe,
+    time = time
+)

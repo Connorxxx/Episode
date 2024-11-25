@@ -9,3 +9,4 @@ sealed class SerialPortError(open val msg: String) {
         data class IO(override val msg: String) : Read(msg)
     }
 }
+
