@@ -7,8 +7,9 @@ import arrow.core.none
 import arrow.core.raise.either
 import arrow.core.some
 import com.connor.episode.data.remote.serial.SerialPortSource
-import com.connor.episode.domain.config.SerialConfig
-import com.connor.episode.domain.error.SerialPortError
+import com.connor.episode.domain.model.business.SerialPortDevice
+import com.connor.episode.domain.model.config.SerialConfig
+import com.connor.episode.domain.model.error.SerialPortError
 import com.connor.episode.domain.repository.SerialPortRepository
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -22,7 +23,9 @@ class SerialPortRepositoryImpl @Inject constructor(
     private var serialPort: Option<SerialPort> = none()
 
     override val getAllDevices
-        get() = serialPortSource.getAllDevices.sortedWith(compareBy({ it.length }, { it }))
+        get() = serialPortSource.getAllDevices.sortedWith(compareBy({ it.length }, { it })).map {
+            SerialPortDevice(name = it.substringAfterLast("/"), path = it)
+        }
 
     override fun openAndRead(config: SerialConfig.() -> Unit) = flow {
         val cf = SerialConfig().apply(config)

@@ -32,8 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.connor.episode.features.serial.SerialPortAction
-import com.connor.episode.features.serial.SerialPortState
+import com.connor.episode.domain.model.uimodel.SerialPortAction
+import com.connor.episode.domain.model.uimodel.SerialPortState
 import com.connor.episode.ui.common.OutlineMenu
 import com.connor.episode.ui.theme.EpisodeTheme
 
@@ -44,9 +44,9 @@ fun SettingDialog(
     onAction: (SerialPortAction) -> Unit = {}
 ) {
     var localSerial by rememberSaveable(state.showSettingDialog) {
-        mutableStateOf(state.serialPort.ifEmpty { state.serialPorts.firstOrNull() ?: "" })
+        mutableStateOf(state.model.portName.ifEmpty { state.model.serialPorts.firstOrNull()?.name ?: "" })
     }
-    var localBaudRate by rememberSaveable(state.showSettingDialog) { mutableStateOf(state.baudRate) }
+    var localBaudRate by rememberSaveable(state.showSettingDialog) { mutableStateOf(state.model.baudRate) }
 
     val enable = localSerial.isNotEmpty() && localBaudRate.isNotEmpty()
 
@@ -76,7 +76,7 @@ fun SettingDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlineMenu(
                     text = localSerial,
-                    menus = state.serialPorts.map { it.substringAfterLast("/") },
+                    menus = state.model.serialPorts.map { it.name },
                     onClick = { localSerial = it }
                 )
                 Spacer(modifier = Modifier.height(18.dp))

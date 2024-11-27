@@ -1,7 +1,6 @@
 package com.connor.episode.domain.repository
 
-import com.connor.episode.domain.model.Message
-import kotlinx.coroutines.flow.Flow
+import com.connor.episode.domain.model.business.Message
 
 interface MessageRepository {
     suspend fun getAllMessages(): List<Message>

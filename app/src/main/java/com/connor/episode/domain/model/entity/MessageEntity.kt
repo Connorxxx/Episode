@@ -1,4 +1,4 @@
-package com.connor.episode.data.local.database.entity
+package com.connor.episode.domain.model.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

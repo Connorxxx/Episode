@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.connor.episode.core.utils.formatSmartly
-import com.connor.episode.domain.model.Message
+import com.connor.episode.domain.model.business.Message
 import com.connor.episode.ui.theme.EpisodeTheme
 
 @Composable

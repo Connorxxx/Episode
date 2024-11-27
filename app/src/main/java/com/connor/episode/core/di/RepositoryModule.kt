@@ -3,8 +3,6 @@ package com.connor.episode.core.di
 import com.connor.episode.data.repository.MessageRepositoryImpl
 import com.connor.episode.data.repository.PreferencesRepositoryImpl
 import com.connor.episode.data.repository.SerialPortRepositoryImpl
-import com.connor.episode.domain.error.SerialPortError
-import com.connor.episode.domain.model.SerialPortModel
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository

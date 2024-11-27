@@ -1,4 +1,4 @@
-package com.connor.episode.domain.error
+package com.connor.episode.domain.model.error
 
 sealed class SerialPortError(open val msg: String) {
     data class Open(override val msg: String) : SerialPortError(msg)

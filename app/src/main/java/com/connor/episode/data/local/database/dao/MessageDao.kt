@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.connor.episode.data.local.database.entity.MessageEntity
+import com.connor.episode.domain.model.entity.MessageEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

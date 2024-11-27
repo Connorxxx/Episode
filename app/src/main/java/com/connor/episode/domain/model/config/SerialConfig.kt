@@ -1,4 +1,4 @@
-package com.connor.episode.domain.config
+package com.connor.episode.domain.model.config
 
 class SerialConfig {
     var devicePath: String = "/dev/ttyS0"

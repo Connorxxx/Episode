@@ -7,16 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.filterHex
 import com.connor.episode.core.utils.hexStringToAscii
-import com.connor.episode.core.utils.hexStringToByteArray
-import com.connor.episode.core.utils.logCat
-import com.connor.episode.data.mapper.toModel
-import com.connor.episode.data.mapper.toPreferences
-import com.connor.episode.data.mapper.toUiState
-import com.connor.episode.data.mapper.updateFromPref
-import com.connor.episode.domain.model.Message
-import com.connor.episode.domain.model.SerialPortModel
+import com.connor.episode.domain.model.business.Message
+import com.connor.episode.domain.model.uimodel.SerialPortAction
+import com.connor.episode.domain.model.uimodel.SerialPortState
+import com.connor.episode.domain.usecase.CloseConnectUseCase
 import com.connor.episode.domain.usecase.GetSerialModelUseCase
+import com.connor.episode.domain.usecase.ObservePrefUseCase
 import com.connor.episode.domain.usecase.OpenReadSerialUseCase
+import com.connor.episode.domain.usecase.UpdateSerialUseCase
+import com.connor.episode.domain.usecase.WriteMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +27,11 @@ import javax.inject.Inject
 @HiltViewModel
 class SerialPortViewModel @Inject constructor(
     private val getSerialModelUseCase: GetSerialModelUseCase,
-    private val openReadSerialUseCase: OpenReadSerialUseCase
+    private val openReadSerialUseCase: OpenReadSerialUseCase,
+    private val observePrefUseCase: ObservePrefUseCase,
+    private val writeMessageUseCase: WriteMessageUseCase,
+    private val updateSerialUseCase: UpdateSerialUseCase,
+    private val closeConnectUseCase: CloseConnectUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
@@ -37,17 +40,17 @@ class SerialPortViewModel @Inject constructor(
     private var readJob: Job? = null
 
     init {
-        "ViewModel init ${hashCode()}".logCat()
         viewModelScope.launch {
-            getSerialModelUseCase().toUiState().also { state ->
-                _state.update { state }
+            _state.update { getSerialModelUseCase() }
+            observePrefUseCase().collect {
+                _state.update { state -> state.copy(settings = it.settings) }
             }
         }
     }
 
-    fun onAction(action: SerialPortAction) {
+    fun onAction(action: SerialPortAction) = viewModelScope.launch {
         when (action) {
-            is SerialPortAction.Send -> send(action)
+            is SerialPortAction.Send -> send(action).let { _state::update }
 
             SerialPortAction.CleanLog -> _state.update {
                 it.copy(messages = emptyList())
@@ -62,25 +65,25 @@ class SerialPortViewModel @Inject constructor(
             SerialPortAction.Close -> {
                 _state.update { it.copy(isConnected = false, extraInfo = "Closed") }
                 readJob?.cancel()
-                serialPortRepository.close()
+                closeConnectUseCase()
             }
 
-            is SerialPortAction.ReceiveFormatSelect -> updatePreferences { preferences ->
-                preferences.copy(receiveFormat = action.idx)
+            is SerialPortAction.ReceiveFormatSelect -> updateSerialUseCase {
+                it.copy(settings = it.settings.copy(receiveFormat = action.idx))
             }
 
             is SerialPortAction.SendFormatSelect -> sendFormatSelect(action)
 
-            SerialPortAction.Resend -> updatePreferences { preferences ->
-                preferences.copy(resend = !preferences.resend)
+            SerialPortAction.Resend -> updateSerialUseCase {
+                it.copy(settings = it.settings.copy(resend = !it.settings.resend))
             }
 
-            is SerialPortAction.ResendSeconds -> updatePreferences { preferences ->
-                preferences.copy(resendSeconds = action.seconds)
+            is SerialPortAction.ResendSeconds -> updateSerialUseCase {
+                it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
             }
 
             is SerialPortAction.OnMessageChange -> {
-                val msg = if (_state.value.sendFormat == 0) {
+                val msg = if (_state.value.settings.sendFormat == 0) {
                     val text = filterHex(_state.value.message.text, action.msg.text)
                     TextFieldValue(
                         text = text,
@@ -94,80 +97,50 @@ class SerialPortViewModel @Inject constructor(
         }
     }
 
-    private fun sendFormatSelect(action: SerialPortAction.SendFormatSelect) {
-        if (_state.value.sendFormat == action.idx) return
+    private suspend fun sendFormatSelect(action: SerialPortAction.SendFormatSelect) {
+        if (_state.value.settings.sendFormat == action.idx) return
         val text = _state.value.message.text
-        if (action.idx == 0) {
-            val text = text.asciiToHexString()
-            _state.update {
-                it.copy(
-                    message = TextFieldValue(
-                        text = text,
-                        selection = TextRange(text.length)
-                    )
-                )
-            }
+        val state = if (action.idx == 0) {
+            val hex = text.asciiToHexString()
+            _state.value.copy(message = TextFieldValue(text = hex, selection = TextRange(hex.length)))
         } else {
-            if (text.replace("\\s+".toRegex(), "").length % 2 != 0) return
-            val text = text.replace("\\s+".toRegex(), "").hexStringToAscii()
-            _state.update {
-                it.copy(
-                    message = TextFieldValue(
-                        text = text,
-                        selection = TextRange(text.length)
-                    )
+            if (text.replace(" ", "").length % 2 != 0) return
+            val ascii = text.replace(" ", "").hexStringToAscii()
+            _state.value.copy(
+                    message = TextFieldValue(text = ascii, selection = TextRange(ascii.length))
                 )
-            }
+
         }
-        updatePreferences { preferences ->
-            preferences.copy(sendFormat = action.idx)
+        _state.update { state }
+        updateSerialUseCase {
+            it.copy(settings = it.settings.copy(sendFormat = action.idx))
         }
     }
 
-    private fun send(action: SerialPortAction.Send) {
-        if (action.msg.isEmpty() || !_state.value.isConnected) return
-        val bytesMsg = if (_state.value.sendFormat == 0) action.msg.hexStringToByteArray()
-        else action.msg.toByteArray(Charsets.US_ASCII)
-        serialPortRepository.write(bytesMsg).fold(
-            ifLeft = { err ->
-                _state.update {
-                    it.copy(extraInfo = err.msg)
-                }
-            },
-            ifRight = {
-                _state.update {
-                    it.copy(
-                        messages = it.messages + Message(action.msg, true)
-                    )
-                }
-            }
-        )
-    }
+    private suspend fun send(action: SerialPortAction.Send) = writeMessageUseCase(action.msg).fold(
+        ifLeft = { _state.value.copy(extraInfo = it) },
+        ifRight = { _state.value.copy(messages = _state.value.messages + Message(action.msg, true)) }
+    )
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun confirm(action: SerialPortAction.ConfirmSetting) {
-        if (_state.value.serialPort == action.serialPort &&
-            _state.value.baudRate == action.baudRate &&
-            _state.value.isConnected
-        ) return
         _state.update { it.copy(showSettingDialog = false) }
-        if (readJob?.isActive == true) readJob?.cancel()
+        readJob?.cancel()
         readJob = viewModelScope.launch {
-            openReadSerialUseCase(
-                model = _state.value.toModel().copy(serialPort = action.serialPort, baudRate = action.baudRate),
-            ).collect {
+            val path =
+                state.value.model.serialPorts.find { it.name == action.serialPort }?.path ?: return@launch
+            openReadSerialUseCase {
+                devicePath = path
+                baudRate = action.baudRate
+            }.collect {
                 val state = it.fold(
                     ifLeft = { err -> state.value.copy(isConnected = !err.isFatal, extraInfo = err.msg) },
-                    ifRight = { bytes -> state.value.copy(messages = state.value.messages + Message(bytes.toHexString(), false)) }
+                    ifRight = { bytes ->
+                        state.value.copy(messages = state.value.messages + Message(bytes.toHexString(), false))
+                    }
                 )
                 _state.update { state }
             }
         }
     }
-
-    private fun updatePreferences(pref: (SerialPortModel) -> SerialPortModel) =
-        viewModelScope.launch {
-            val pref = serialPortRepository.updatePreferences(pref(_state.value.toModel())).toPreferences()
-            _state.update { it.updateFromPref(pref) }
-        }
 }

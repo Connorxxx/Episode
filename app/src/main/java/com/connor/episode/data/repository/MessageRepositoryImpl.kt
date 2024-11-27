@@ -3,7 +3,7 @@ package com.connor.episode.data.repository
 import com.connor.episode.data.local.database.dao.MessageDao
 import com.connor.episode.data.mapper.toEntity
 import com.connor.episode.data.mapper.toMessage
-import com.connor.episode.domain.model.Message
+import com.connor.episode.domain.model.business.Message
 import com.connor.episode.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject

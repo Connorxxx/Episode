@@ -1,7 +1,7 @@
 package com.connor.episode.data.mapper
 
-import com.connor.episode.data.local.database.entity.MessageEntity
-import com.connor.episode.domain.model.Message
+import com.connor.episode.domain.model.entity.MessageEntity
+import com.connor.episode.domain.model.business.Message
 
 fun MessageEntity.toMessage() = Message(
     content = content,
