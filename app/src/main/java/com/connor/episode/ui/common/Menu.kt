@@ -24,7 +24,7 @@ import com.connor.episode.ui.theme.EpisodeTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OutlineMenu(
-    text: String = "ttyS0",
+    text: String = "ttyS1",
     menus: List<String> = listOf("ttyS0", "ttyS1", "ttyS2", "ttyS3"),
     onClick: (String) -> Unit = {}
 ) {

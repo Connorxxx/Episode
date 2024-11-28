@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.filterHex
 import com.connor.episode.core.utils.hexStringToAscii
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.business.Message
 import com.connor.episode.domain.model.uimodel.SerialPortAction
 import com.connor.episode.domain.model.uimodel.SerialPortState
@@ -50,7 +51,9 @@ class SerialPortViewModel @Inject constructor(
 
     fun onAction(action: SerialPortAction) = viewModelScope.launch {
         when (action) {
-            is SerialPortAction.Send -> send(action).let { _state::update }
+            is SerialPortAction.Send -> send(action)
+                .let { state ->
+                _state.update { state } }
 
             SerialPortAction.CleanLog -> _state.update {
                 it.copy(messages = emptyList())
@@ -74,8 +77,8 @@ class SerialPortViewModel @Inject constructor(
 
             is SerialPortAction.SendFormatSelect -> sendFormatSelect(action)
 
-            SerialPortAction.Resend -> updateSerialUseCase {
-                it.copy(settings = it.settings.copy(resend = !it.settings.resend))
+            is SerialPortAction.Resend -> updateSerialUseCase {
+                it.copy(settings = it.settings.copy(resend = action.resend))
             }
 
             is SerialPortAction.ResendSeconds -> updateSerialUseCase {
@@ -119,24 +122,26 @@ class SerialPortViewModel @Inject constructor(
 
     private suspend fun send(action: SerialPortAction.Send) = writeMessageUseCase(action.msg).fold(
         ifLeft = { _state.value.copy(extraInfo = it) },
-        ifRight = { _state.value.copy(messages = _state.value.messages + Message(action.msg, true)) }
+        ifRight = { _state.value.copy(messages = _state.value.messages + it, message = TextFieldValue()) }
     )
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun confirm(action: SerialPortAction.ConfirmSetting) {
-        _state.update { it.copy(showSettingDialog = false) }
+        "${action.serialPort} ${action.baudRate}".logCat()
+        "${state.value.model.serialPorts}".logCat()
+        _state.update { it.copy(showSettingDialog = false, isConnected = true, extraInfo = "Connected") }
         readJob?.cancel()
         readJob = viewModelScope.launch {
             val path =
-                state.value.model.serialPorts.find { it.name == action.serialPort }?.path ?: return@launch
+                state.value.model.serialPorts.find { it.path.contains(action.serialPort ) }?.path ?: return@launch
+            "path $path".logCat()
             openReadSerialUseCase {
                 devicePath = path
                 baudRate = action.baudRate
             }.collect {
                 val state = it.fold(
                     ifLeft = { err -> state.value.copy(isConnected = !err.isFatal, extraInfo = err.msg) },
-                    ifRight = { bytes ->
-                        state.value.copy(messages = state.value.messages + Message(bytes.toHexString(), false))
+                    ifRight = { message ->
+                        state.value.copy(messages = state.value.messages + message)
                     }
                 )
                 _state.update { state }

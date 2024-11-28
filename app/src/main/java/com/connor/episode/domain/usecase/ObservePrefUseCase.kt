@@ -1,10 +1,10 @@
 package com.connor.episode.domain.usecase
 
 import com.connor.episode.domain.repository.PreferencesRepository
-import dagger.hilt.android.scopes.ViewModelScoped
+import javax.inject.Singleton
 import javax.inject.Inject
 
-@ViewModelScoped
+@Singleton
 class ObservePrefUseCase @Inject constructor(
     private val preferencesRepository: PreferencesRepository
 ) {

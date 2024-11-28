@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.connor.episode.core.utils.formatSmartly
@@ -36,6 +37,9 @@ fun ChatBubble(
     message: Message,
     modifier: Modifier = Modifier
 ) {
+    val text = with(message) {
+        if (isMe) "${time.formatSmartly()}  (${type})" else "(${type})  ${time.formatSmartly()}"
+    }
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = if (message.isMe) Alignment.CenterEnd else Alignment.CenterStart
@@ -66,7 +70,7 @@ fun ChatBubble(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = message.time.formatSmartly(),
+                    text = text,
                     style = TextStyle(
                         fontSize = 12.sp,
                         color = if (message.isMe) MaterialTheme.colorScheme.outlineVariant else Color.Gray
@@ -85,7 +89,10 @@ fun ChatMessageLazyColumn(
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(messages.size) {
-        listState.scrollToItem(messages.size)
+        listState.animateScrollToItem(
+            index = (messages.size - 1).coerceAtLeast(0),
+            scrollOffset = 0
+        )
     }
     LazyColumn(
         state = listState,
@@ -93,7 +100,8 @@ fun ChatMessageLazyColumn(
         modifier = modifier
             .fillMaxSize()
             //.padding(bottom = it.calculateBottomPadding())
-            .background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 8.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(1) {
@@ -107,6 +115,7 @@ fun ChatMessageLazyColumn(
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

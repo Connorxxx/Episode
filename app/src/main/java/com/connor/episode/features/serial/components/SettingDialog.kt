@@ -44,11 +44,11 @@ fun SettingDialog(
     onAction: (SerialPortAction) -> Unit = {}
 ) {
     var localSerial by rememberSaveable(state.showSettingDialog) {
-        mutableStateOf(state.model.portName.ifEmpty { state.model.serialPorts.firstOrNull()?.name ?: "" })
+        mutableStateOf(state.model.portName)
     }
     var localBaudRate by rememberSaveable(state.showSettingDialog) { mutableStateOf(state.model.baudRate) }
 
-    val enable = localSerial.isNotEmpty() && localBaudRate.isNotEmpty()
+    val enable = state.model.serialPorts.isNotEmpty() && localBaudRate.isNotEmpty()
 
     BasicAlertDialog(onDismissRequest = { }) {
         Surface(

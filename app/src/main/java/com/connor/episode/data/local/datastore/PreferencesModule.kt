@@ -1,6 +1,7 @@
 package com.connor.episode.data.local.datastore
 
 import android.content.Context
+import com.connor.episode.core.delegate.protobufDataStore
 import com.connor.episode.domain.model.preference.SerialPortPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

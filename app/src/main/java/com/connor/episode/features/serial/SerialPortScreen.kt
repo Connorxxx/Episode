@@ -1,5 +1,6 @@
 package com.connor.episode.features.serial
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -57,14 +58,14 @@ private fun SerialPort(
                 onSendMessage = { onAction(SerialPortAction.Send(it)) },
                 onSendFormatSelect = { onAction(SerialPortAction.SendFormatSelect(it)) },
                 onReceiveFormatSelect = { onAction(SerialPortAction.ReceiveFormatSelect(it)) },
-                onResend = { onAction(SerialPortAction.Resend) },
+                onResend = { onAction(SerialPortAction.Resend(it)) },
                 onResendSeconds = { onAction(SerialPortAction.ResendSeconds(it)) },
                 onMessageChange = { onAction(SerialPortAction.OnMessageChange(it)) }
             )
         }
     ) {
         ChatMessageLazyColumn(
-            modifier = Modifier.padding(it),
+            modifier = Modifier.padding(it).fillMaxSize(),
             state.messages
         )
     }

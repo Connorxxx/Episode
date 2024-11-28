@@ -6,11 +6,15 @@ import com.connor.episode.domain.model.business.Message
 fun MessageEntity.toMessage() = Message(
     content = content,
     isMe = isMe,
-    time = time
+    time = time,
+    sendSuccessful = sendSuccessful,
+    type = type
 )
 
 fun Message.toEntity() = MessageEntity(
     content = content,
     isMe = isMe,
-    time = time
+    time = time,
+    sendSuccessful = sendSuccessful,
+    type = type
 )

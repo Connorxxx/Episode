@@ -1,4 +1,4 @@
-package com.connor.episode.features.home
+package com.connor.episode.domain.model.uimodel
 
 import com.connor.episode.features.HomeRoute
 

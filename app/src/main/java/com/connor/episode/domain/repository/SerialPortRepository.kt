@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface SerialPortRepository {
     val getAllDevices: List<SerialPortDevice>
-    fun openAndRead(config: SerialConfig.() -> Unit): Flow<Either<SerialPortError, ByteArray>>
+    fun openAndRead(config: SerialConfig): Flow<Either<SerialPortError, ByteArray>>
     fun write(data: ByteArray): Either<SerialPortError, Unit>
     fun close()
 }

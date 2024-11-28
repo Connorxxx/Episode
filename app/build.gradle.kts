@@ -43,6 +43,19 @@ android {
             )
         }
     }
+    flavorDimensions += "app"
+    productFlavors {
+        create("demo") {
+            dimension = "app"
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+        }
+        create("full") {
+            dimension = "app"
+            applicationIdSuffix = ".full"
+            versionNameSuffix = "-full"
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -23,7 +23,11 @@ sealed interface SerialPortAction {
     data object Close : SerialPortAction
     data class SendFormatSelect(val idx: Int) : SerialPortAction
     data class ReceiveFormatSelect(val idx: Int) : SerialPortAction
-    data object Resend : SerialPortAction
+    data class Resend(val resend: Boolean) : SerialPortAction
     data class ResendSeconds(val seconds: Int) : SerialPortAction
     data class OnMessageChange(val msg: TextFieldValue) : SerialPortAction
 }
+
+data class SerialPortUi(
+    val options: List<String> = listOf("HEX", "ASCII")
+)

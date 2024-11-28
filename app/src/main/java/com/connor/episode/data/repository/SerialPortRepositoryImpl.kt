@@ -27,9 +27,8 @@ class SerialPortRepositoryImpl @Inject constructor(
             SerialPortDevice(name = it.substringAfterLast("/"), path = it)
         }
 
-    override fun openAndRead(config: SerialConfig.() -> Unit) = flow {
-        val cf = SerialConfig().apply(config)
-        serialPortSource.open(cf.devicePath, cf.baudRate.toInt()).map {
+    override fun openAndRead(config: SerialConfig) = flow {
+        serialPortSource.open(config.devicePath, config.baudRate.toInt()).map {
             serialPort = it.some()
             serialPortSource.read(it)
         }.fold(

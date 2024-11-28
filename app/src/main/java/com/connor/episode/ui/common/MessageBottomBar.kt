@@ -49,10 +49,11 @@ fun MessageBottomBar(
     receiveSelectIdx: Int = 0,
     isResend: Boolean = false,
     resendSeconds: Int = 1,
+    options: List<String> = listOf("HEX", "ASCII"),
     onSendMessage: (String) -> Unit = {},
     onSendFormatSelect: (Int) -> Unit = {},
     onReceiveFormatSelect: (Int) -> Unit = {},
-    onResend: () -> Unit = {},
+    onResend: (Boolean) -> Unit = {},
     onResendSeconds: (Int) -> Unit = {},
     message: TextFieldValue = TextFieldValue(""),
     onMessageChange: (TextFieldValue) -> Unit = {}
@@ -118,7 +119,7 @@ fun MessageBottomBar(
         }
         if (expanded) {
             Column {
-                val options = listOf("HEX", "ASCII")
+
                 FormatType(
                     text = "Send format:",
                     options,
@@ -141,7 +142,7 @@ fun MessageBottomBar(
                             .padding(horizontal = 8.dp)
                             .animateContentSize(),
                         selected = isResend,
-                        onClick = onResend,
+                        onClick = { onResend(!isResend) },
                         label = { Text("Resend", maxLines = 1) },
                         leadingIcon =
                             if (isResend) {

@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.connor.episode.core.utils.navigateTopTo
+import com.connor.episode.domain.model.uimodel.HomeAction
 import com.connor.episode.features.HOME
 import com.connor.episode.features.HomeRoute
 import com.connor.episode.features.serial.SerialPortScreen
@@ -36,7 +37,8 @@ fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel(
     val navController = rememberNavController()
     val serialPortViewModel: SerialPortViewModel = hiltViewModel()
     LaunchedEffect(state.currentRoute) {
-        navController.navigateTopTo(state.currentRoute)
+        if (state.currentRoute != navController.currentDestination?.route)
+            navController.navigateTopTo(state.currentRoute)
     }
     Home(
         modifier = modifier,
@@ -44,23 +46,18 @@ fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel(
         routes = state.routes,
         onAction = vm::onAction
     ) {
-        NavHost(navController = navController, startDestination = HOME) {
-            navigation(
-                route = HOME,
-                startDestination = HomeRoute.SerialPort.route
-            ) {
-                composable(HomeRoute.SerialPort.route) {
-                    SerialPortScreen(serialPortViewModel)
-                }
-                composable(HomeRoute.Tcp.route) {
-                    TcpScreen()
-                }
-                composable(HomeRoute.Udp.route) {
-                    UdpScreen()
-                }
-                composable(HomeRoute.WebSocket.route) {
-                    WebSocketScreen()
-                }
+        NavHost(navController = navController, HomeRoute.SerialPort.route) {
+            composable(HomeRoute.SerialPort.route) {
+                SerialPortScreen(serialPortViewModel)
+            }
+            composable(HomeRoute.Tcp.route) {
+                TcpScreen()
+            }
+            composable(HomeRoute.Udp.route) {
+                UdpScreen()
+            }
+            composable(HomeRoute.WebSocket.route) {
+                WebSocketScreen()
             }
         }
     }
@@ -89,7 +86,13 @@ private fun Home(
                     onClick = {
                         onAction(HomeAction.RouteChange(route.route))
                     },
-                    text = { Text(text = route.title, maxLines = 1, color = MaterialTheme.colorScheme.onSurface) }
+                    text = {
+                        Text(
+                            text = route.title,
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 )
             }
         }

@@ -1,12 +1,13 @@
-package com.connor.episode.data.local.datastore
+package com.connor.episode.core.delegate
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import kotlinx.serialization.serializer
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.properties.ReadOnlyProperty
@@ -29,11 +30,11 @@ inline fun <reified T : Any> protobufDataStore(
         override val defaultValue: T = v
 
         override suspend fun readFrom(input: InputStream): T {
-            return ProtoBuf.decodeFromByteArray(serializer(), input.readBytes())
+            return ProtoBuf.decodeFromByteArray(input.readBytes())
         }
 
         override suspend fun writeTo(t: T, output: OutputStream) {
-            ProtoBuf.encodeToByteArray(serializer(), t).also { output.write(it) }
+            ProtoBuf.encodeToByteArray(t).let(output::write)
         }
     }
     return dataStore(fileName, serializer)

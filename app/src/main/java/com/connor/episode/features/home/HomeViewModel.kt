@@ -1,6 +1,8 @@
 package com.connor.episode.features.home
 
 import androidx.lifecycle.ViewModel
+import com.connor.episode.domain.model.uimodel.HomeAction
+import com.connor.episode.domain.model.uimodel.HomeState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
