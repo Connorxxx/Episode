@@ -23,7 +23,7 @@ class SerialPortRepositoryImpl @Inject constructor(
     private var serialPort: Option<SerialPort> = none()
 
     override val getAllDevices
-        get() = serialPortSource.getAllDevices.sortedWith(compareBy({ it.length }, { it })).map {
+        get() = serialPortSource.getAllDevicesPath.sortedWith(compareBy({ it.length }, { it })).map {
             SerialPortDevice(name = it.substringAfterLast("/"), path = it)
         }
 

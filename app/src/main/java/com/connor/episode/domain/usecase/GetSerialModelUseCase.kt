@@ -5,6 +5,7 @@ import com.connor.episode.domain.model.uimodel.SerialPortState
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class GetSerialModelUseCase @Inject constructor(
@@ -15,7 +16,7 @@ class GetSerialModelUseCase @Inject constructor(
 
     suspend operator fun invoke(): SerialPortState {
         val list = serialPortRepository.getAllDevices
-        val serialPref = preferencesRepository.getSerialPref()
+        val serialPref = preferencesRepository.prefFlow.first()
         val messages = messageRepository.getAllMessages()
         return SerialPortState(
             model = SerialPortModel(
@@ -24,7 +25,7 @@ class GetSerialModelUseCase @Inject constructor(
                 baudRate = serialPref.baudRate
             ),
             messages = messages,
-            settings = serialPref.settings,
+            bottomBarSettings = serialPref.settings,
             extraInfo = if (list.isEmpty()) "No Serial Ports Found" else "Closed"
         )
     }

@@ -30,8 +30,13 @@ class HttpClient2(
 
 fun use() {
     val client = HttpClient {
-        baseUrl = "http://localhost:8080"
-        timeout = 30.seconds
+        baseUrl = "http://192.168.1.1:3000"
+        timeout = 10.seconds
     }
+    println(ClientConfig().baseUrl)
     client.get("user")
+}
+
+fun main() {
+    use()
 }

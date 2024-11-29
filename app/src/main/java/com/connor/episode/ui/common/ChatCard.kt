@@ -20,16 +20,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.connor.episode.core.utils.formatSmartly
 import com.connor.episode.domain.model.business.Message
+import com.connor.episode.ui.state.rememberIsScrollingUp
 import com.connor.episode.ui.theme.EpisodeTheme
 
 @Composable
@@ -75,7 +78,7 @@ fun ChatBubble(
                         fontSize = 12.sp,
                         color = if (message.isMe) MaterialTheme.colorScheme.outlineVariant else Color.Gray
                     ),
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(if (message.isMe) Alignment.End else Alignment.Start),
                 )
             }
         }
@@ -88,6 +91,7 @@ fun ChatMessageLazyColumn(
     messages: List<Message> = (0..5).map { Message(it.toString(), it % 2 == 0) },
 ) {
     val listState = rememberLazyListState()
+    val isScrollingUp by listState.rememberIsScrollingUp()
     LaunchedEffect(messages.size) {
         listState.animateScrollToItem(
             index = (messages.size - 1).coerceAtLeast(0),
@@ -115,7 +119,6 @@ fun ChatMessageLazyColumn(
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

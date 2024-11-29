@@ -16,13 +16,10 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
-enum class SerialPortType {
-    REAL, FAKE
-}
-
 @Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class SerialPort(val type: SerialPortType)
+annotation class SerialPort(val type: Type) {
+    enum class Type { REAL, FAKE }
+}
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -30,12 +27,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    @SerialPort(SerialPortType.REAL)
+    @SerialPort(SerialPort.Type.REAL)
     abstract fun bindSerialPortRepository(impl: SerialPortRepositoryImpl): SerialPortRepository
 
     @Binds
     @Singleton
-    @SerialPort(SerialPortType.FAKE)
+    @SerialPort(SerialPort.Type.FAKE)
     abstract fun bindFakeSerialPortRepository(impl: FakeSerialPortRepository): SerialPortRepository
 
     @Binds
@@ -54,7 +51,7 @@ object RepositoryProvideModule {
     @Provides
     @Singleton
     fun provide(
-        @SerialPort(SerialPortType.REAL) real: SerialPortRepository,
-        @SerialPort(SerialPortType.FAKE) fake: SerialPortRepository
+        @SerialPort(SerialPort.Type.REAL) real: SerialPortRepository,
+        @SerialPort(SerialPort.Type.FAKE) fake: SerialPortRepository
     ) = if (BuildConfig.FLAVOR == "demo") fake else real
 }

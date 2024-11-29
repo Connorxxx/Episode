@@ -8,5 +8,5 @@ import javax.inject.Inject
 class ObservePrefUseCase @Inject constructor(
     private val preferencesRepository: PreferencesRepository
 ) {
-    operator fun invoke() = preferencesRepository.observeSerialPref()
+    operator fun invoke() = preferencesRepository.prefFlow
 }

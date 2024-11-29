@@ -7,7 +7,6 @@ import com.connor.episode.domain.model.config.SerialConfig
 import com.connor.episode.domain.model.error.SerialPortError
 import com.connor.episode.domain.repository.SerialPortRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,7 +14,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class FakeSerialPortRepository @Inject constructor() : SerialPortRepository, CoroutineScope by MainScope() {
+class FakeSerialPortRepository @Inject constructor(
+    private val appScope: CoroutineScope
+) : SerialPortRepository {
 
     private val state = MutableSharedFlow<ByteArray>()
 
@@ -29,7 +30,7 @@ class FakeSerialPortRepository @Inject constructor() : SerialPortRepository, Cor
     }
 
     override fun write(data: ByteArray): Either<SerialPortError, Unit> {
-        launch {
+        appScope.launch {
             state.emit(data)
         }
         return Unit.right()

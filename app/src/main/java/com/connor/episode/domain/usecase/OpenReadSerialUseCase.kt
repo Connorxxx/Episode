@@ -2,6 +2,7 @@ package com.connor.episode.domain.usecase
 
 import arrow.core.left
 import arrow.core.right
+import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.mapper.toMessage
 import com.connor.episode.domain.model.error.UiError
@@ -16,6 +17,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transform
 import javax.inject.Inject
@@ -48,17 +50,18 @@ class OpenReadSerialUseCase @Inject constructor(
                             serialPortRepository.close()
                             currentCoroutineContext().cancel()
                         }
-
                         else -> emit(UiError(msg = err.msg).left())
                     }
                 },
                 ifRight = { bytes ->
-                    "Received ${bytes.size} bytes".logCat()
+                    val type = preferencesRepository.prefFlow.first().settings.receiveFormat
+                    "Received ${bytes.size} bytes  type: $type".logCat()
+                    val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                     val message = MessageEntity(
-                        content = bytes.toHexString(),
+                        content = content,
                         bytes = bytes,
                         isMe = false,
-                        type = SerialPortUi().options[preferencesRepository.getSerialPref().settings.receiveFormat]
+                        type = SerialPortUi().options[type]
                     )
                     messageRepository.addMessage(message)
                     emit(message.toMessage().right())

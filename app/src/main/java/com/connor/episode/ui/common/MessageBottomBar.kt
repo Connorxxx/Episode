@@ -1,6 +1,9 @@
 package com.connor.episode.ui.common
 
 import OutlinedTextField
+import android.app.Activity
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
@@ -9,7 +12,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,36 +36,58 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.getSystemService
+import com.connor.episode.core.utils.logCat
+import com.connor.episode.domain.model.preference.BottomBarSettings
+import com.connor.episode.domain.model.uimodel.BottomBarAction
+import com.connor.episode.ui.state.rememberKeyboardState
 import com.connor.episode.ui.theme.EpisodeTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun MessageBottomBar(
-    sendSelectIdx: Int = 0,
-    receiveSelectIdx: Int = 0,
-    isResend: Boolean = false,
-    resendSeconds: Int = 1,
+    enabled: Boolean = true,
+    expanded: Boolean = false,
     options: List<String> = listOf("HEX", "ASCII"),
-    onSendMessage: (String) -> Unit = {},
-    onSendFormatSelect: (Int) -> Unit = {},
-    onReceiveFormatSelect: (Int) -> Unit = {},
-    onResend: (Boolean) -> Unit = {},
-    onResendSeconds: (Int) -> Unit = {},
     message: TextFieldValue = TextFieldValue(""),
-    onMessageChange: (TextFieldValue) -> Unit = {}
+    state: BottomBarSettings = BottomBarSettings(),
+    onAction: (BottomBarAction) -> Unit = {}
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val isKeyboardVisible by rememberKeyboardState()
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    var isFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(isKeyboardVisible) {
+        when (isKeyboardVisible) {
+            true -> onAction(BottomBarAction.Expand(false))
+            false -> focusManager.clearFocus()
+        }
+    }
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            val imm = context.getSystemService<InputMethodManager>()!!
+            (context as Activity).currentFocus?.let {
+                imm.hideSoftInputFromWindow(it.windowToken, 0)
+            }
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -70,7 +99,7 @@ fun MessageBottomBar(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { expanded = !expanded }) {
+            IconButton(onClick = { onAction(BottomBarAction.Expand(!expanded)) }) {
                 Icon(
                     if (!expanded) Icons.Filled.GridView else Icons.Rounded.GridView,
                     contentDescription = null
@@ -78,19 +107,23 @@ fun MessageBottomBar(
             }
             OutlinedTextField(
                 value = message,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged {
+                        isFocused = it.isFocused
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
                 ),
-                onValueChange = { onMessageChange(it) },
+                onValueChange = { onAction(BottomBarAction.OnMessageChange(it)) },
                 //shape = RoundedCornerShape(6.dp),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Send
                 ),
                 placeholder = {
                     Text(
-                        text = "Write a ${if (sendSelectIdx == 0) "HEX" else "ASCII"} message...",
+                        text = "Write a ${if (state.sendFormat == 0) "HEX" else "ASCII"} message...",
                         style = TextStyle(
                             color = Color.Gray,
                         )
@@ -98,19 +131,21 @@ fun MessageBottomBar(
                 },
                 suffix = {
                     if (message.text.isNotEmpty())
-                        Icon(modifier = Modifier.clickable(
-                            onClick = { onMessageChange(TextFieldValue("")) }
-                        ), imageVector = Icons.Filled.Close, contentDescription = null)
+                        Icon(
+                            modifier = Modifier.clickable(
+                                onClick = { onAction(BottomBarAction.OnMessageChange(TextFieldValue())) }
+                            ), imageVector = Icons.Filled.Close, contentDescription = null)
                 },
                 keyboardActions = KeyboardActions(
-                    onSend = { onSendMessage(message.text) }
+                    onSend = { onAction(BottomBarAction.Send(message.text)) }
                 ),
                 maxLines = 4,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             )
             //PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             IconButton(
-                onClick = { onSendMessage(message.text) },
+                onClick = { onAction(BottomBarAction.Send(message.text)) },
+                enabled = enabled,
                 modifier = Modifier
                     .padding(start = 6.dp)
             ) {
@@ -119,19 +154,18 @@ fun MessageBottomBar(
         }
         if (expanded) {
             Column {
-
                 FormatType(
                     text = "Send format:",
                     options,
-                    sendSelectIdx,
-                    onSelected = { onSendFormatSelect(it) }
+                    state.sendFormat,
+                    onSelected = { onAction(BottomBarAction.SendFormatSelect(it)) }
                 )
                 Spacer(modifier = Modifier.padding(4.dp))
                 FormatType(
                     text = "Receive format:",
                     options,
-                    receiveSelectIdx,
-                    onSelected = { onReceiveFormatSelect(it) }
+                    state.receiveFormat,
+                    onSelected = { onAction(BottomBarAction.ReceiveFormatSelect(it)) }
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
                 Row(
@@ -141,11 +175,12 @@ fun MessageBottomBar(
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
                             .animateContentSize(),
-                        selected = isResend,
-                        onClick = { onResend(!isResend) },
+                        enabled = enabled,
+                        selected = state.resend,
+                        onClick = { onAction(BottomBarAction.Resend(!state.resend)) },
                         label = { Text("Resend", maxLines = 1) },
                         leadingIcon =
-                            if (isResend) {
+                            if (state.resend) {
                                 {
                                     Icon(
                                         imageVector = Icons.Filled.Done,
@@ -156,10 +191,10 @@ fun MessageBottomBar(
                             } else null
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    AnimatedVisibility(visible = isResend) {
+                    AnimatedVisibility(visible = state.resend) {
                         NumberPicker(
-                            value = resendSeconds,
-                            onValueChange = { onResendSeconds(it) },
+                            value = state.resendSeconds,
+                            onValueChange = { onAction(BottomBarAction.ResendSeconds(it)) },
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
@@ -167,7 +202,6 @@ fun MessageBottomBar(
                 }
                 Spacer(modifier = Modifier.padding(4.dp))
             }
-            // Spacer(modifier = Modifier.height(300.dp))
         }
     }
 }
