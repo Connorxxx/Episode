@@ -105,6 +105,7 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.network)
     implementation(libs.arrow.core)
     implementation(libs.arrow.resilience)
     implementation(libs.androidx.room.runtime)

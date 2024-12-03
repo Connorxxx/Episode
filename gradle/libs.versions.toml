@@ -2,7 +2,7 @@
 agp = "8.7.3"
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
-hilt = "2.52"
+hilt = "2.53"
 
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -16,8 +16,8 @@ hilt-navigation-compose = "1.2.0"
 hilt-compiler = "1.2.0"
 datastore-preferences = "1.1.1"
 kotlinx-coroutines = "1.9.0"
-kotlinx-serialization = "1.7.0"
-ktor = "2.3.11"
+kotlinx-serialization = "1.7.3"
+ktor = "3.0.1"
 arrow = "1.2.4"
 room = "2.6.1"
 material3 = "1.4.0-alpha04"
@@ -53,6 +53,7 @@ ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "
 ktor-client-encoding = { group = "io.ktor", name = "ktor-client-encoding", version.ref = "ktor"}
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor"}
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor"}
+ktor-network = { group = "io.ktor", name = "ktor-network", version.ref = "ktor" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
 arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arrow" }

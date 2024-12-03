@@ -25,7 +25,7 @@ class WriteMessageUseCase @Inject constructor(
         if (msg.isEmpty()) return "Message can not be empty".left()
         val type = preferencesRepository.prefFlow.first().settings.sendFormat
         val bytesMsg = getBytesMsg(type, msg)
-        val message = Message(msg, true, type = SerialPortUi().options[type])
+        val message = Message("Client", msg, true, type = SerialPortUi().options[type])
         messageRepository.addMessage(message.toEntity().copy(bytes = bytesMsg))
         return serialPortRepository.write(bytesMsg).fold(
             ifLeft = { it.msg.left() },

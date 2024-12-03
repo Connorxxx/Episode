@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 @Entity(tableName = "messages")
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String = "",
     val content: String = "",
     val bytes: ByteArray = byteArrayOf(),
     val isMe: Boolean = false,

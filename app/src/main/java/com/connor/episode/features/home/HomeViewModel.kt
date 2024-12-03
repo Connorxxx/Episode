@@ -23,22 +23,8 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     fun onAction(action: HomeAction) {
-        viewModelScope.launch(Dispatchers.Main) {
-            testFlow.collect {
-                // 在主线程处理
-            }
-        }
         when (action) {
             is HomeAction.RouteChange -> _uiState.update { it.copy(currentRoute = action.route) }
         }
     }
-
-    val testFlow = flow {
-        emit(1)
-        delay(1000)
-        emit(2)
-        delay(1000)
-        emit(3)
-    }.flowOn(Dispatchers.IO)
-
 }

@@ -2,16 +2,22 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a932e56b9deb86cf07521974dab7fd2e",
+    "identityHash": "140d8864875f792ea582ac1e5813f5a4",
     "entities": [
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `content` TEXT NOT NULL, `bytes` BLOB NOT NULL, `isMe` INTEGER NOT NULL, `time` INTEGER NOT NULL, `sendSuccessful` INTEGER NOT NULL, `type` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `content` TEXT NOT NULL, `bytes` BLOB NOT NULL, `isMe` INTEGER NOT NULL, `time` INTEGER NOT NULL, `sendSuccessful` INTEGER NOT NULL, `type` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -64,7 +70,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a932e56b9deb86cf07521974dab7fd2e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '140d8864875f792ea582ac1e5813f5a4')"
     ]
   }
 }

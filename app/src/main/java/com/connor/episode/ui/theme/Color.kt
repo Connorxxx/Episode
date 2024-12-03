@@ -220,6 +220,7 @@ val surfaceContainerHighestDarkHighContrast = Color(0xFF353434)
 
 
 
-
+val messageName = Color(0xFFFF86A6)
+val messageNameOther = Color(0xFF22BCE2)
 
 

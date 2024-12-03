@@ -38,7 +38,7 @@ private fun SerialPort(
     state: SerialPortState = SerialPortState(
         model = SerialPortModel(portName = "ttyS0"),
         isConnected = true,
-        messages = (0..5).map { Message(it.toString(), it % 2 == 0) }
+        messages = (0..5).map { Message("Client", it.toString(), it % 2 == 0) }
     ),
     onAction: (SerialPortAction) -> Unit = {}
 ) {

@@ -24,8 +24,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -34,6 +37,8 @@ import com.connor.episode.core.utils.formatSmartly
 import com.connor.episode.domain.model.business.Message
 import com.connor.episode.ui.state.rememberIsScrollingUp
 import com.connor.episode.ui.theme.EpisodeTheme
+import com.connor.episode.ui.theme.messageName
+import com.connor.episode.ui.theme.messageNameOther
 
 @Composable
 fun ChatBubble(
@@ -48,7 +53,7 @@ fun ChatBubble(
         contentAlignment = if (message.isMe) Alignment.CenterEnd else Alignment.CenterStart
     ) {
         Card(
-            modifier = Modifier.widthIn(max = 280.dp),
+            modifier = Modifier.widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 0.9f),
             shape = RoundedCornerShape(
                 topStart = if (message.isMe) 20.dp else 4.dp,
                 topEnd = if (message.isMe) 4.dp else 20.dp,
@@ -62,12 +67,26 @@ fun ChatBubble(
             elevation = CardDefaults.cardElevation(defaultElevation = .4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
+                Text(
+                    text = message.name,
+                    modifier = Modifier
+                        .align(if (message.isMe) Alignment.End else Alignment.Start),
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (message.isMe) messageName else messageNameOther
+                    ),
+                    softWrap = true,
+                    overflow = TextOverflow.Visible,
+                    textAlign = TextAlign.Justify
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = message.content,
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         color = if (message.isMe) Color.White else Color.Black
                     )
                 )
@@ -88,7 +107,7 @@ fun ChatBubble(
 @Composable
 fun ChatMessageLazyColumn(
     modifier: Modifier = Modifier,
-    messages: List<Message> = (0..5).map { Message(it.toString(), it % 2 == 0) },
+    messages: List<Message> = (0..5).map { Message("Connor","Hello Im message No.$it", it % 2 == 0) },
 ) {
     val listState = rememberLazyListState()
     val isScrollingUp by listState.rememberIsScrollingUp()

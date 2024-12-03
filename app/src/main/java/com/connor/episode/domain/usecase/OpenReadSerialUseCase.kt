@@ -58,6 +58,7 @@ class OpenReadSerialUseCase @Inject constructor(
                     "Received ${bytes.size} bytes  type: $type".logCat()
                     val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                     val message = MessageEntity(
+                        name = "Server",
                         content = content,
                         bytes = bytes,
                         isMe = false,
