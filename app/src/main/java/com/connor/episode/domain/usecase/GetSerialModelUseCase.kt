@@ -1,5 +1,6 @@
 package com.connor.episode.domain.usecase
 
+import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SerialPortModel
 import com.connor.episode.domain.model.uimodel.SerialPortState
 import com.connor.episode.domain.repository.MessageRepository
@@ -16,8 +17,8 @@ class GetSerialModelUseCase @Inject constructor(
 
     suspend operator fun invoke(): SerialPortState {
         val list = serialPortRepository.getAllDevices
-        val serialPref = preferencesRepository.prefFlow.first()
-        val messages = messageRepository.getAllMessages()
+        val serialPref = preferencesRepository.serialPrefFlow.first()
+        val messages = messageRepository.getAllMessages(Owner.SerialPort)
         return SerialPortState(
             model = SerialPortModel(
                 serialPorts = list,

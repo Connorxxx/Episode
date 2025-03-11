@@ -4,13 +4,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.connor.episode.ui.theme.EpisodeTheme
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.connor.episode.features.tcp.Tcp
+import com.connor.episode.features.tcp.components.TCPSettingDialog
+import com.connor.episode.features.common.ui.theme.EpisodeTheme
 
 @Composable
-fun WebSocketScreen() {
-    WebSocket()
+fun WebSocketScreen(vm: WebSocketViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    Tcp(
+        state = state,
+        onAction = vm::onAction
+    )
+    if (state.isShowSettingDialog) TCPSettingDialog(
+        state = state,
+        onAction = vm::onAction,
+    )
 }
 
 @Composable

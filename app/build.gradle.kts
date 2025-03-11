@@ -33,9 +33,17 @@ android {
     buildFeatures {
         buildConfig = true
     }
-
+    signingConfigs {
+        create("rk") {
+            storeFile = file("D:\\src\\project\\Android\\Sign\\platform.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     buildTypes {
         release {
+            signingConfig = signingConfigs["rk"]
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -62,7 +70,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += "-Xcontext-receivers"
+        freeCompilerArgs += listOf("-Xcontext-receivers", "-Xwhen-guards")
     }
     externalNativeBuild {
         cmake {
@@ -91,6 +99,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.hilt.android)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.kotlinx.io.core)
     ksp(libs.hilt.android.compiler)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -105,7 +114,10 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
     implementation(libs.ktor.network)
+    implementation(libs.ktor.server.websockets)
     implementation(libs.arrow.core)
     implementation(libs.arrow.resilience)
     implementation(libs.androidx.room.runtime)
@@ -121,3 +133,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+//kotlin {
+//    sourceSets.all {
+//        languageSettings.enableLanguageFeature("ExplicitBackingFields")
+//    }
+//}

@@ -1,6 +1,6 @@
 package com.connor.episode.core.di
 
-import com.connor.episode.core.di.Dispatcher.EpisodeDispatchers.Default
+import com.connor.episode.core.di.Dispatcher.EpisodeDispatchers.IO
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +17,6 @@ internal object CoroutineScopesModule {
     @Provides
     @Singleton
     fun providesCoroutineScope(
-        @Dispatcher(Default) dispatcher: CoroutineDispatcher,
+        @Dispatcher(IO) dispatcher: CoroutineDispatcher,
     ): CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
 }

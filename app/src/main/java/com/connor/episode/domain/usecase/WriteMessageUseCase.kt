@@ -1,39 +1,43 @@
 package com.connor.episode.domain.usecase
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
+import com.connor.episode.core.utils.getBytesMsg
 import com.connor.episode.core.utils.hexStringToByteArray
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.mapper.toEntity
 import com.connor.episode.domain.model.business.Message
-import com.connor.episode.domain.model.uimodel.SerialPortUi
+import com.connor.episode.domain.model.business.Owner
+import com.connor.episode.domain.model.business.msgType
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.PreferencesRepository
-import com.connor.episode.domain.repository.SerialPortRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class WriteMessageUseCase @Inject constructor(
-    private val serialPortRepository: SerialPortRepository,
     private val messageRepository: MessageRepository,
     private val preferencesRepository: PreferencesRepository,
 ) {
 
-    suspend operator fun invoke(msg: String): Either<String, Message> {
-        if (msg.isEmpty()) return "Message can not be empty".left()
-        val type = preferencesRepository.prefFlow.first().settings.sendFormat
+    suspend operator fun invoke(msg: String, owner: Owner): ByteArray {
+        if (msg.isEmpty()) Error("Message can not be empty")
+        val type = when (owner) {
+            Owner.SerialPort -> preferencesRepository.serialPrefFlow.first().settings.sendFormat
+            Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.sendFormat
+            Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.sendFormat
+            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.sendFormat
+        }
         val bytesMsg = getBytesMsg(type, msg)
-        val message = Message("Client", msg, true, type = SerialPortUi().options[type])
-        messageRepository.addMessage(message.toEntity().copy(bytes = bytesMsg))
-        return serialPortRepository.write(bytesMsg).fold(
-            ifLeft = { it.msg.left() },
-            ifRight = { message.right() }
+        val message = Message(
+            0,
+            "Client",
+            msg,
+            true,
+            type = msgType[type],
+            owner = owner
         )
+        val xx = message.toEntity().copy(bytes = bytesMsg)
+        "WriteMessageUseCase: $xx".logCat()
+        messageRepository.addMessage(xx)
+        return bytesMsg
     }
-
-    private fun getBytesMsg(type: Int, msg: String) = if (type == 0) msg.hexStringToByteArray()
-    else msg.toByteArray(Charsets.US_ASCII)
 
 }

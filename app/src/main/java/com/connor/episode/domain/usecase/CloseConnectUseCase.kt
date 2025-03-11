@@ -1,15 +1,37 @@
 package com.connor.episode.domain.usecase
 
+import com.connor.episode.core.di.Client
+import com.connor.episode.core.di.NetType.TCP
+import com.connor.episode.core.di.NetType.UDP
+import com.connor.episode.core.di.NetType.WebSocket
+import com.connor.episode.core.di.Server
+import com.connor.episode.domain.model.business.ModelType
+import com.connor.episode.domain.repository.NetClientRepository
+import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.SerialPortRepository
-import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-@Singleton
 class CloseConnectUseCase @Inject constructor(
-    private val serialPortRepository: SerialPortRepository
+    val serialPortRepository: SerialPortRepository,
+    @Server(TCP) val tcpServerRepository: NetServerRepository,
+    @Server(UDP) val udpServerRepository: NetServerRepository,
+    @Client(TCP) val tcpClientRepository: NetClientRepository,
+    @Client(UDP) val udpClientRepository: NetClientRepository,
+    @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
+    @Client(WebSocket) val webSocketClientRepository: NetClientRepository
 ) {
-    operator fun invoke() {
-        serialPortRepository.close()
+    suspend operator fun invoke(type: ModelType) = withContext(Dispatchers.IO) {
+        when (type) {
+            ModelType.SerialPort -> serialPortRepository.close()
+            ModelType.TCPServer -> tcpServerRepository.close()
+            ModelType.TCPClient -> tcpClientRepository.close()
+            ModelType.UDPServer -> udpServerRepository.close()
+            ModelType.UDPClient -> udpClientRepository.close()
+            ModelType.WebSocketServer -> webSocketServerRepository.close()
+            ModelType.WebSocketClient -> webSocketClientRepository.close()
+        }
     }
 
 }

@@ -11,3 +11,9 @@ sealed interface BottomBarAction {
     data class OnMessageChange(val msg: TextFieldValue) : BottomBarAction
     data class Expand(val expand: Boolean) : BottomBarAction
 }
+
+sealed interface TopBarAction {
+    data class IsShowSettingDialog(val show: Boolean) : TopBarAction
+    data object CleanLog : TopBarAction
+    data object Close : TopBarAction
+}

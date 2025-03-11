@@ -1,12 +1,14 @@
 package com.connor.episode.domain.usecase
 
 import com.connor.episode.domain.repository.PreferencesRepository
-import javax.inject.Singleton
 import javax.inject.Inject
 
-@Singleton
 class ObservePrefUseCase @Inject constructor(
-    private val preferencesRepository: PreferencesRepository
+    val preferencesRepository: PreferencesRepository
 ) {
-    operator fun invoke() = preferencesRepository.prefFlow
+
+    val serial get() = preferencesRepository.serialPrefFlow
+    val tcp get() = preferencesRepository.tcpPrefFlow
+    val udp get() = preferencesRepository.udpPrefFlow
+    val webSocket get() = preferencesRepository.webSocketPrefFlow
 }

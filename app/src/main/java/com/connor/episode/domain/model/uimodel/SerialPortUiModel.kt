@@ -17,13 +17,11 @@ data class SerialPortState(
 )
 
 sealed interface SerialPortAction {
-    data object CleanLog : SerialPortAction
-    data object IsShowSettingDialog : SerialPortAction
     data class ConfirmSetting(val serialPort: String, val baudRate: String) : SerialPortAction
-    data object Close : SerialPortAction
     data class Bottom(val bottom: BottomBarAction) : SerialPortAction
+    data class Top(val top: TopBarAction) : SerialPortAction
 }
 
-data class SerialPortUi(
-    val options: List<String> = listOf("HEX", "ASCII")
-)
+//data class SerialPortUi(
+//    val options: List<String> = listOf("HEX", "ASCII")
+//)

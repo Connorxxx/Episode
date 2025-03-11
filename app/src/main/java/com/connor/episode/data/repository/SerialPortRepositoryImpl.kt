@@ -33,7 +33,8 @@ class SerialPortRepositoryImpl @Inject constructor(
             serialPortSource.read(it)
         }.fold(
             ifLeft = { emit(it.left()) },
-            ifRight = { emitAll(it) }
+            ifRight = {
+                emitAll(it) }
         )
     }
 

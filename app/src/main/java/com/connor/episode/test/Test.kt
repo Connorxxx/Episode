@@ -1,10 +1,13 @@
 package com.connor.episode.test
 
+import android.view.View
 import arrow.core.Either
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.hexStringToAscii
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
@@ -35,4 +38,15 @@ fun test() = flow {
 fun throwRw(i: Int): Int {
     if (i >= 5) throw IOException("test")
     return i
+}
+
+fun View.clicks() = callbackFlow {
+    setOnClickListener { trySend(Unit) }
+    awaitClose { setOnClickListener(null) }
+}
+
+fun myTest(block: (String) -> Boolean) {
+    val name = "test"
+    val b = block(name)
+    println(b)
 }

@@ -1,9 +1,10 @@
 package com.connor.episode.data.mapper
 
-import com.connor.episode.domain.model.entity.MessageEntity
 import com.connor.episode.domain.model.business.Message
+import com.connor.episode.domain.model.entity.MessageEntity
 
 fun MessageEntity.toMessage() = Message(
+    id = id,
     name = name,
     content = content,
     isMe = isMe,
@@ -18,5 +19,6 @@ fun Message.toEntity() = MessageEntity(
     isMe = isMe,
     time = time,
     sendSuccessful = sendSuccessful,
-    type = type
+    type = type,
+    owner = owner
 )

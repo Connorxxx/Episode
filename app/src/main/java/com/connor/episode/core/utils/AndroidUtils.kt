@@ -8,6 +8,10 @@ import android.widget.Toast
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.connor.episode.App
+import kotlinx.io.Buffer
+import kotlinx.io.Source
+import java.net.InetAddress
+import java.net.NetworkInterface
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -62,3 +66,18 @@ fun LocalDateTime.formatSmartly(): String {
         }
     }
 }
+
+fun getLocalIp(): String? =
+    NetworkInterface.getNetworkInterfaces()
+        .asSequence()
+        .flatMap { it.inetAddresses.asSequence() }
+        .filter { it.isLocalNetworkAddress() }
+        .map { it.hostAddress }
+        .firstOrNull()
+
+private fun InetAddress.isLocalNetworkAddress(): Boolean =
+    isSiteLocalAddress &&
+            hostAddress?.contains(":") == false &&
+            hostAddress != "127.0.0.1"
+
+fun ByteArray.asSource(): Source = Buffer().apply { write(this@asSource) }
