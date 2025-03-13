@@ -17,6 +17,7 @@ import com.connor.episode.domain.model.uimodel.NetAction
 import com.connor.episode.domain.model.uimodel.NetState
 import com.connor.episode.domain.model.uimodel.TopBarAction
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.error
 import kotlin.to
 
@@ -168,12 +170,14 @@ class NetworkViewModelDelegate(
     }
 
     private suspend fun bottom(action: BottomBarAction) = when (action) {
-        is BottomBarAction.Send -> if (
-            state.value.result == NetResult.Error ||
-            state.value.result == NetResult.Close &&
-            state.value.message.text.isNotEmpty()
-        ) Unit
-        else _state.update { send(action) }
+        is BottomBarAction.Send -> {
+            if (
+                (state.value.result != NetResult.Error ||
+                state.value.result != NetResult.Close) &&
+                state.value.message.text.isEmpty()
+            ) Unit
+            else _state.update { send(action) }
+        }
 
         is BottomBarAction.Expand -> _state.update {
             it.copy(expandedBottomBar = action.expand)

@@ -204,7 +204,6 @@ fun MessageBottomBar(
                         NumberPicker(
                             number = state.resendSeconds,
                             onValueChange = {
-                                "onValueChange: $it".logCat()
                                 onAction(BottomBarAction.ResendSeconds(it))
                             },
                             modifier = Modifier.padding(end = 8.dp)

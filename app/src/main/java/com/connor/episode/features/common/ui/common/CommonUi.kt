@@ -62,14 +62,12 @@ fun NumberPicker(
     LaunchedEffect(longClickDecrease) {
         while (longClickDecrease) {
             if (value > range.first) value--
-            "${value - 1}".logCat()
             delay(100)
         }
     }
     LaunchedEffect(longClickIncrease) {
         while (longClickIncrease) {
             if (value < range.last) value++
-            "${value + 1}".logCat()
             delay(100)
         }
     }

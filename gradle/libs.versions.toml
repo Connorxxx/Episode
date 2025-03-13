@@ -57,6 +57,7 @@ ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-conte
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor"}
 ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "ktor"}
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor"}
+ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor"}
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor"}
 ktor-network = { group = "io.ktor", name = "ktor-network", version.ref = "ktor" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }

@@ -23,13 +23,13 @@ class SendDataUseCase @Inject constructor(
 
     suspend operator fun invoke(bytes: ByteArray, type: ModelType) =
         when (type) {
-            ModelType.SerialPort -> serialPortRepository.write(bytes).mapLeft { it.msg }
-            ModelType.TCPServer -> tcpServerRepository.sendBroadcastMessage(bytes).mapLeft { it.msg }
-            ModelType.TCPClient -> tcpClientRepository.sendBytesMessage(bytes).mapLeft { it.msg }
-            ModelType.UDPServer -> udpServerRepository.sendBroadcastMessage(bytes).mapLeft { it.msg }
-            ModelType.UDPClient -> udpClientRepository.sendBytesMessage(bytes).mapLeft { it.msg }
-            ModelType.WebSocketServer -> webSocketServerRepository.sendBroadcastMessage(bytes).mapLeft { it.msg }
-            ModelType.WebSocketClient -> webSocketClientRepository.sendBytesMessage(bytes).mapLeft { it.msg }
-        }
+            ModelType.SerialPort -> serialPortRepository.write(bytes)
+            ModelType.TCPServer -> tcpServerRepository.sendBroadcastMessage(bytes)
+            ModelType.TCPClient -> tcpClientRepository.sendBytesMessage(bytes)
+            ModelType.UDPServer -> udpServerRepository.sendBroadcastMessage(bytes)
+            ModelType.UDPClient -> udpClientRepository.sendBytesMessage(bytes)
+            ModelType.WebSocketServer -> webSocketServerRepository.sendBroadcastMessage(bytes)
+            ModelType.WebSocketClient -> webSocketClientRepository.sendBytesMessage(bytes)
+        }.mapLeft { it.msg }
 
 }

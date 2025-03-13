@@ -11,8 +11,10 @@ import com.connor.episode.domain.model.business.SerialPortDevice
 import com.connor.episode.domain.model.config.SerialConfig
 import com.connor.episode.domain.model.error.SerialPortError
 import com.connor.episode.domain.repository.SerialPortRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import serialport_api.SerialPort
 import javax.inject.Inject
 
@@ -38,9 +40,11 @@ class SerialPortRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun write(data: ByteArray) = either {
-        val serial = serialPort.getOrElse { raise(SerialPortError.Open("Serial port not opened")) }
-        serialPortSource.write(serial, data).bind()
+    override suspend fun write(data: ByteArray) = withContext(Dispatchers.IO) {
+        either {
+            val serial = serialPort.getOrElse { raise(SerialPortError.Open("Serial port not opened")) }
+            serialPortSource.write(serial, data).bind()
+        }
     }
 
     override fun close() {

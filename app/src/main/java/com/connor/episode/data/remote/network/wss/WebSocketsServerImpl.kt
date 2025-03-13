@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.raise.either
 import arrow.core.right
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.remote.network.NetworkServer
 import com.connor.episode.domain.model.error.NetworkError
 import io.ktor.server.application.install
@@ -25,13 +26,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
@@ -50,26 +55,29 @@ class WebSocketsServerImpl @Inject constructor() : NetworkServer {
     override fun startServerAndRead(
         ip: String,
         port: Int
-    ): Flow<Either<NetworkError, Pair<String, ByteArray>>> = flow {
-        Either.catch {
+    ): Flow<Either<NetworkError, Pair<String, ByteArray>>> =
+        channelFlow { //为了与Ktor的协程建立父子关系，符合结构化并发
             embeddedServer = embeddedServer(CIO, host = ip, port = port) {
                 install(WebSockets) {
                     pingPeriod = 15.seconds
                     timeout = 15.seconds
                     maxFrameSize = Long.MAX_VALUE
                     masking = false
+
                 }
                 routing {
                     webSocket {
+                        "start incoming flow".logCat()
                         clients[call.request.origin.remoteHost] = this
-                        emitAll(readClientMessage())
+                        readClientMessage().collect { it: Either<NetworkError, Pair<String, ByteArray>> ->
+                            send(it)
+                        }
                     }
                 }
             }.start(wait = false)
-        }.mapLeft {
-            NetworkError.Connect(it.message ?: "Start server error")
-        }.onLeft { emit(it.left()) }
-    }
+        }.catch {
+            emit(NetworkError.Connect(it.message ?: "Start server error").left())
+        }.flowOn(Dispatchers.IO)
 
     fun DefaultWebSocketServerSession.readClientMessage() = incoming.receiveAsFlow().map {
         val ip = call.request.origin.remoteHost
@@ -106,7 +114,7 @@ class WebSocketsServerImpl @Inject constructor() : NetworkServer {
 
     private suspend fun sendBytesMessage(byteArray: ByteArray, wss: WebSocketServerSession) =
         Either.catch {
-            wss.send(Frame.Binary(true, byteArray))
+            wss.send(Frame.Binary(true, byteArray + '\n'.code.toByte()))
         }.mapLeft {
             NetworkError.Write(
                 it.message ?: "Write error, the channel already closed",

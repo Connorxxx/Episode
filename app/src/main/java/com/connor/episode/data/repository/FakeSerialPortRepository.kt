@@ -14,9 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class FakeSerialPortRepository @Inject constructor(
-    private val appScope: CoroutineScope
-) : SerialPortRepository {
+class FakeSerialPortRepository @Inject constructor() : SerialPortRepository {
 
     private val state = MutableSharedFlow<ByteArray>()
 
@@ -29,10 +27,8 @@ class FakeSerialPortRepository @Inject constructor(
         it.right()
     }
 
-    override fun write(data: ByteArray): Either<SerialPortError, Unit> {
-        appScope.launch {
-            state.emit(data)
-        }
+    override suspend fun write(data: ByteArray): Either<SerialPortError, Unit> {
+        state.emit(data)
         return Unit.right()
     }
 

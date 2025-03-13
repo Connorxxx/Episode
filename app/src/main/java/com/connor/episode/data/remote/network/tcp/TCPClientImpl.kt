@@ -14,6 +14,7 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -59,6 +60,7 @@ class TCPClientImpl @Inject constructor(private val socketBuilder: TcpSocketBuil
     private suspend fun connect(ip: String, port: Int) = Either.catch {
         socketBuilder.connect(ip, port) {
             keepAlive = true
+            //noDelay = true
         }
     }.mapLeft { NetworkError.Connect(it.message ?: "Connect error $ip:$port") }
 
@@ -83,9 +85,11 @@ class TCPClientImpl @Inject constructor(private val socketBuilder: TcpSocketBuil
     }
 
     private suspend fun sendBytesMessage(byteArray: ByteArray, output: ByteWriteChannel) =
-        Either.catch { output.writeFully(byteArray) }.mapLeft {
+        Either.catch {
+            output.writeFully(byteArray)
+            output.writeByte('\n'.code.toByte())
+            output.flush()
+        }.mapLeft {
             NetworkError.Write(it.message ?: "Write error", "null")
         }
-
-
 }

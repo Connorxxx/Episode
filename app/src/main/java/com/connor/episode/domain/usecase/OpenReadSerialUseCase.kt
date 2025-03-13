@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -40,7 +41,6 @@ class OpenReadSerialUseCase @Inject constructor(
         serialPortRepository.openAndRead(cf).map {
             it.onRight { bytes ->
                 val type = preferencesRepository.serialPrefFlow.first().settings.receiveFormat
-                "Received ${bytes.size} bytes  type: $type".logCat()
                 val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                 val message = MessageEntity(
                     name = "Server",
@@ -62,7 +62,8 @@ class OpenReadSerialUseCase @Inject constructor(
                     }
                     else -> UiError(msg = err.msg)
                 }
-            }
-        }.also { emitAll(it) }
+            }.leftOrNull()
+        }.filterNotNull().also {
+            emitAll(it) }
     }.flowOn(Dispatchers.IO)
 }

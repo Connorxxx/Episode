@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface NetServerRepository {
 
-    fun startServerAndRead(ip: String, port: Int, type: Int, owner: Owner): Flow<Either<NetworkError, MessageEntity>>
+    fun startServerAndRead(ip: String, port: Int, typeProvider: suspend () -> Int, owner: Owner): Flow<Either<NetworkError, MessageEntity>>
 
     suspend fun sendBroadcastMessage(bytes: ByteArray): Either<NetworkError, Unit>
 

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -60,13 +61,13 @@ class WebSocketsClientImpl @Inject constructor(
                 it.onLeft { session?.cancel() }
             }.onCompletion {
                 session = null
-                "end of incoming flow".logCat()
+                "end of incoming flow $it".logCat()
             }
             emitAll(incomingFlow)
         }
     }.catch {
         emit(NetworkError.Connect(it.message ?: "Connect error").left())
-    }
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun sendBytesMessage(byteArray: ByteArray) = Either.catch {
         val session = session ?: throw Error("Session not connected")

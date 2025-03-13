@@ -108,7 +108,7 @@ class SerialPortViewModel @Inject constructor(
     }
 
     private suspend fun bottom(action: BottomBarAction) = when (action) {
-        is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isNotEmpty())
+        is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isEmpty())
             send(action).let { state ->
                 _state.update { state }
             } else Unit

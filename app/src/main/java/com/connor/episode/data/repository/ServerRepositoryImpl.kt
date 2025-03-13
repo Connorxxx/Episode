@@ -10,6 +10,7 @@ import com.connor.episode.domain.model.error.NetworkError
 import com.connor.episode.domain.repository.NetServerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -23,19 +24,20 @@ class ServerRepositoryImpl @Inject constructor(
     override fun startServerAndRead(
         ip: String,
         port: Int,
-        type: Int,
+        typeProvider: suspend () -> Int,
         owner: Owner
     ): Flow<Either<NetworkError, MessageEntity>> {
-        "start server by $owner".logCat()
         return networkServer.startServerAndRead(ip, port).map {
             it.map { (ip, bytes) ->
-                val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
+                val currentType = typeProvider()
+                val content =
+                    if (currentType == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                 MessageEntity(
                     name = ip,
                     content = content,
                     bytes = bytes,
                     isMe = false,
-                    type = msgType[type],
+                    type = msgType[currentType],
                     owner = owner
                 )
             }

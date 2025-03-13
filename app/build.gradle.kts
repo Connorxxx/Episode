@@ -118,6 +118,7 @@ dependencies {
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.network)
     implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.status.pages)
     implementation(libs.arrow.core)
     implementation(libs.arrow.resilience)
     implementation(libs.androidx.room.runtime)

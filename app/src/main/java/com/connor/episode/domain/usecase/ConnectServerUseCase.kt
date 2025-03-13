@@ -3,6 +3,7 @@ package com.connor.episode.domain.usecase
 import arrow.core.Either
 import com.connor.episode.core.di.Client
 import com.connor.episode.core.di.NetType.*
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SelectType
 import com.connor.episode.domain.model.entity.MessageEntity
@@ -28,11 +29,13 @@ class ConnectServerUseCase @Inject constructor(
 ) {
     @OptIn(ExperimentalStdlibApi::class)
     suspend operator fun invoke(ip: String, port: Int, owner: Owner) = run {
-        val type = when (owner) {
-            Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.sendFormat
-            Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.sendFormat
-            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.sendFormat
-            Owner.SerialPort -> error("SerialPort can't connect")
+        val getType: suspend () -> Int = {
+            when (owner) {
+                Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.receiveFormat
+                Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.receiveFormat
+                Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.receiveFormat
+                Owner.SerialPort -> error("SerialPort can't connect")
+            }
         }
         when (owner) {
             Owner.UDP -> preferencesRepository.updateUDPPref {
@@ -42,13 +45,15 @@ class ConnectServerUseCase @Inject constructor(
                     lastSelectType = SelectType.Client
                 )
             }
+
             Owner.TCP -> preferencesRepository.updateTCPPref {
                 it.copy(
                     clientIP = ip,
                     clientPort = port,
                     lastSelectType = SelectType.Client
-                    )
+                )
             }
+
             Owner.WebSocket -> preferencesRepository.updateWebSocketPref {
                 it.copy(
                     clientIP = ip,
@@ -56,17 +61,18 @@ class ConnectServerUseCase @Inject constructor(
                     lastSelectType = SelectType.Client
                 )
             }
+
             Owner.SerialPort -> error("SerialPort can't connect")
         }
         when (owner) {
-            Owner.UDP -> udpClientRepository.connectAndRead(ip, port, type, owner)
-            Owner.TCP -> tcpClientRepository.connectAndRead(ip, port, type, owner)
-            Owner.WebSocket -> webSocketClientRepository.connectAndRead(ip, port, type, owner)
+            Owner.UDP -> udpClientRepository.connectAndRead(ip, port, getType, owner)
+            Owner.TCP -> tcpClientRepository.connectAndRead(ip, port, getType, owner)
+            Owner.WebSocket -> webSocketClientRepository.connectAndRead(ip, port, getType, owner)
             Owner.SerialPort -> error("SerialPort can't connect")
         }.mapLeftToUiError()
     }
 
-    fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError()= map {
+    fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {
         it.onRight { message ->
             messageRepository.addMessage(message)
         }.mapLeft { err ->

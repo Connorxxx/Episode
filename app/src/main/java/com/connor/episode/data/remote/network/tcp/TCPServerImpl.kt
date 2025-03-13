@@ -16,6 +16,7 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -113,7 +114,7 @@ class TCPServerImpl @Inject constructor(
     }
 
     private suspend fun sendBytesMessage(byteArray: ByteArray, channel: ByteWriteChannel) =
-        Either.catch { channel.writeFully(byteArray) }
+        Either.catch { channel.writeFully(byteArray);channel.writeByte('\n'.code.toByte()) }
             .mapLeft {
                 NetworkError.Write(
                     it.message ?: "Write error", "null"

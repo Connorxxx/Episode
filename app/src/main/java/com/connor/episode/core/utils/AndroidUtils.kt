@@ -78,6 +78,6 @@ fun getLocalIp(): String? =
 private fun InetAddress.isLocalNetworkAddress(): Boolean =
     isSiteLocalAddress &&
             hostAddress?.contains(":") == false &&
-            hostAddress != "127.0.0.1"
+            hostAddress?.contains("192.168") == true
 
 fun ByteArray.asSource(): Source = Buffer().apply { write(this@asSource) }
