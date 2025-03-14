@@ -13,17 +13,15 @@ import javax.inject.Inject
 
 class GetNetModelUseCase @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
-    private val messageRepository: MessageRepository
 ) {
 
     suspend operator fun invoke(owner: Owner): NetState {
         val pref: NetPreferences = when (owner) {
-            Owner.TCP -> preferencesRepository.tcpPrefFlow.first()
-            Owner.UDP -> preferencesRepository.udpPrefFlow.first()
-            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first()
+            Owner.TCP -> preferencesRepository.tcpPrefFlow
+            Owner.UDP -> preferencesRepository.udpPrefFlow
+            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow
             else -> throw IllegalArgumentException("Invalid owner type")
-        }
-        val message = messageRepository.getAllMessages(owner)
+        }.first()
         return NetState(
             model = NetModel(
                 server = ServerModel(
@@ -34,7 +32,6 @@ class GetNetModelUseCase @Inject constructor(
                     port = pref.clientPort
                 ),
             ),
-            messages = message,
             bottomBarSettings = pref.settings,
             currentType = pref.lastSelectType
         )

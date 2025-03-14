@@ -3,6 +3,7 @@ package com.connor.episode.features.common.delegate
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.getLocalIp
 import com.connor.episode.core.utils.hexStringToAscii
@@ -39,6 +40,8 @@ class NetworkViewModelDelegate(
     private val _state = MutableStateFlow(NetState())
     override val state = _state.asStateFlow()
 
+    override val messagePagingFlow = useCases.pagingMessageUseCase(owner).cachedIn(scope)
+
     private var serverJob: Job? = null
     private var clientJob: Job? = null
     private var resendJob: Job? = null
@@ -65,12 +68,6 @@ class NetworkViewModelDelegate(
                         bottomBarSettings = it.settings,
                         currentType = it.lastSelectType
                     )
-                }
-            }.launchIn(this)
-            useCases.observeNewMessageUseCase(owner).onEach {
-                "$owner new message: $it".logCat()
-                _state.update { state ->
-                    state.copy(messages = state.messages + it.toMessage())
                 }
             }.launchIn(this)
         }
@@ -143,23 +140,17 @@ class NetworkViewModelDelegate(
         clientJob?.cancel()
         useCases.closeConnectUseCase(modelType.second)
         clientJob = useCases.connectTCPServerUseCase(action.ip, action.port.toInt(), owner).onEach { err ->
-            "Error connectRemote $err".logCat()
-            if (err.isFatal) {
-                _state.update {
-                    it.copy(result = NetResult.Error, error = err.msg)
-                }
-                useCases.closeConnectUseCase(modelType.second)
-                cancel()
+            _state.update {
+                it.copy(result = NetResult.Error, error = err.msg)
             }
+            useCases.closeConnectUseCase(modelType.second)
+            cancel()
         }.launchIn(this)
     }
 
     private suspend fun top(action: TopBarAction) = when (action) {
         TopBarAction.CleanLog -> {
             useCases.cleanLogUseCase(owner)
-            _state.update {
-                it.copy(messages = emptyList())
-            }
         }
 
         TopBarAction.Close -> close()

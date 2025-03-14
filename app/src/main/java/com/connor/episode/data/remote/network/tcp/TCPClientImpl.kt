@@ -5,6 +5,7 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.raise.either
 import arrow.core.right
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.remote.network.NetworkClient
 import com.connor.episode.domain.model.error.NetworkError
 import io.ktor.network.sockets.Socket
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -82,6 +84,8 @@ class TCPClientImpl @Inject constructor(private val socketBuilder: TcpSocketBuil
             emit(bytes)
             if (bytes.isLeft()) break
         }
+    }.onCompletion {
+        "tcp disconnect".logCat()
     }
 
     private suspend fun sendBytesMessage(byteArray: ByteArray, output: ByteWriteChannel) =

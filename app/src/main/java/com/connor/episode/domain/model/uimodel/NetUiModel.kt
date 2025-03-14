@@ -9,7 +9,6 @@ import com.connor.episode.domain.model.preference.BottomBarSettings
 
 data class NetState(
     val model: NetModel = NetModel(),
-    val messages: List<Message> = emptyList(),
     val bottomBarSettings: BottomBarSettings = BottomBarSettings(),
     val isShowSettingDialog: Boolean = false,
     val currentType: SelectType = SelectType.Server,

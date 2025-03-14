@@ -1,11 +1,15 @@
 package com.connor.episode.domain.model.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.connor.episode.domain.model.business.Owner
 import java.time.LocalDateTime
 
-@Entity(tableName = "messages")
+@Entity(
+    tableName = "messages",
+    indices = [Index(value = ["owner"])]
+)
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String = "",

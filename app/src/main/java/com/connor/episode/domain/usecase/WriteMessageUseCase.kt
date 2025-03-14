@@ -10,6 +10,7 @@ import com.connor.episode.domain.model.business.msgType
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class WriteMessageUseCase @Inject constructor(
@@ -20,11 +21,11 @@ class WriteMessageUseCase @Inject constructor(
     suspend operator fun invoke(msg: String, owner: Owner): ByteArray {
         if (msg.isEmpty()) Error("Message can not be empty")
         val type = when (owner) {
-            Owner.SerialPort -> preferencesRepository.serialPrefFlow.first().settings.sendFormat
-            Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.sendFormat
-            Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.sendFormat
-            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.sendFormat
-        }
+            Owner.SerialPort -> preferencesRepository.serialPrefFlow.map { it.settings }
+            Owner.TCP -> preferencesRepository.tcpPrefFlow.map { it.settings }
+            Owner.UDP -> preferencesRepository.udpPrefFlow.map { it.settings }
+            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.map { it.settings }
+        }.first().sendFormat
         val bytesMsg = getBytesMsg(type, msg)
         val message = Message(
             0,
@@ -34,9 +35,7 @@ class WriteMessageUseCase @Inject constructor(
             type = msgType[type],
             owner = owner
         )
-        val xx = message.toEntity().copy(bytes = bytesMsg)
-        "WriteMessageUseCase: $xx".logCat()
-        messageRepository.addMessage(xx)
+        messageRepository.addMessage(message.toEntity().copy(bytes = bytesMsg))
         return bytesMsg
     }
 

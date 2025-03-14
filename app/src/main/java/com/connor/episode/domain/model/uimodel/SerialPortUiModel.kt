@@ -7,7 +7,6 @@ import com.connor.episode.domain.model.preference.BottomBarSettings
 
 data class SerialPortState(
     val model: SerialPortModel = SerialPortModel(),
-    val messages: List<Message> = emptyList(),
     val bottomBarSettings: BottomBarSettings = BottomBarSettings(),
     val extraInfo: String = "Close",
     val showSettingDialog: Boolean = false,

@@ -4,6 +4,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.logCat
@@ -16,8 +17,8 @@ import com.connor.episode.domain.model.uimodel.SerialPortState
 import com.connor.episode.domain.model.uimodel.TopBarAction
 import com.connor.episode.domain.usecase.CleanLogUseCase
 import com.connor.episode.domain.usecase.CloseConnectUseCase
+import com.connor.episode.domain.usecase.GetPagingMessageUseCase
 import com.connor.episode.domain.usecase.GetSerialModelUseCase
-import com.connor.episode.domain.usecase.ObserveNewMessageUseCase
 import com.connor.episode.domain.usecase.ObservePrefUseCase
 import com.connor.episode.domain.usecase.OpenReadSerialUseCase
 import com.connor.episode.domain.usecase.ResendUseCase
@@ -43,13 +44,15 @@ class SerialPortViewModel @Inject constructor(
     private val closeConnectUseCase: CloseConnectUseCase,
     private val resendUseCase: ResendUseCase,
     private val cleanLogUseCase: CleanLogUseCase,
-    private val observeNewMessageUseCase: ObserveNewMessageUseCase,
     private val sendDataUseCase: SendDataUseCase,
-    private val observePrefUseCase: ObservePrefUseCase
+    private val observePrefUseCase: ObservePrefUseCase,
+    private val pagingMessageUseCase: GetPagingMessageUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SerialPortState())
     val state = _state.asStateFlow()
+
+    val messagePagingFlow = pagingMessageUseCase(Owner.SerialPort).cachedIn(viewModelScope)
 
     private var readJob: Job? = null
     private var resendJob: Job? = null
@@ -69,12 +72,6 @@ class SerialPortViewModel @Inject constructor(
                     )
                 }
             }.launchIn(this)
-            observeNewMessageUseCase(Owner.SerialPort).onEach {
-                "SerialPort message update: $it".logCat()
-                _state.update { state ->
-                    state.copy(messages = state.messages + it.toMessage())
-                }
-            }.launchIn(this)
         }
     }
 
@@ -91,9 +88,6 @@ class SerialPortViewModel @Inject constructor(
     private suspend fun top(action: TopBarAction) = when (action) {
         TopBarAction.CleanLog -> {
             cleanLogUseCase(Owner.SerialPort)
-            _state.update {
-                it.copy(messages = emptyList())
-            }
         }
 
         TopBarAction.Close -> {
@@ -108,7 +102,7 @@ class SerialPortViewModel @Inject constructor(
     }
 
     private suspend fun bottom(action: BottomBarAction) = when (action) {
-        is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isEmpty())
+        is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isNotEmpty())
             send(action).let { state ->
                 _state.update { state }
             } else Unit

@@ -78,7 +78,6 @@ class TCPServerImpl @Inject constructor(
     }
 
     override suspend fun close() = withContext(NonCancellable + Dispatchers.IO) {
-        "tcp server close".logCat()
         clients.values.forEach { it.socket.close() }
         clients.clear()
         serverSocket?.close()

@@ -31,11 +31,11 @@ class ConnectServerUseCase @Inject constructor(
     suspend operator fun invoke(ip: String, port: Int, owner: Owner) = run {
         val getType: suspend () -> Int = {
             when (owner) {
-                Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.receiveFormat
-                Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.receiveFormat
-                Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.receiveFormat
+                Owner.UDP -> preferencesRepository.udpPrefFlow.map { it.settings }
+                Owner.TCP -> preferencesRepository.tcpPrefFlow.map { it.settings }
+                Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.map { it.settings }
                 Owner.SerialPort -> error("SerialPort can't connect")
-            }
+            }.first().receiveFormat
         }
         when (owner) {
             Owner.UDP -> preferencesRepository.updateUDPPref {
@@ -76,10 +76,7 @@ class ConnectServerUseCase @Inject constructor(
         it.onRight { message ->
             messageRepository.addMessage(message)
         }.mapLeft { err ->
-            when (err) {
-                is NetworkError.Connect -> UiError(msg = err.msg, isFatal = true)
-                else -> UiError(msg = err.msg, isFatal = false)
-            }
+            UiError(msg = err.msg, isFatal = true)
         }.leftOrNull()
     }.filterNotNull().flowOn(Dispatchers.IO)
 }

@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.connor.episode.domain.model.business.Message
 import com.connor.episode.domain.model.business.SerialPortModel
 import com.connor.episode.domain.model.uimodel.BottomBarAction
@@ -21,14 +23,16 @@ import com.connor.episode.features.common.ui.common.ChatMessageLazyColumn
 import com.connor.episode.features.common.ui.common.MessageBottomBar
 import com.connor.episode.features.common.ui.common.TopBar
 import com.connor.episode.features.common.ui.theme.EpisodeTheme
+import com.connor.episode.features.tcp.PreviewTabs
 
 @Composable
 fun SerialPortScreen(vm: SerialPortViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val pagingMessages = vm.messagePagingFlow.collectAsLazyPagingItems()
     BackHandler(enabled = state.expandedBottomBar) {
         vm.onAction(SerialPortAction.Bottom(BottomBarAction.Expand(false)))
     }
-    SerialPort(state, vm::onAction)
+    SerialPort(state, pagingMessages, vm::onAction)
     if (state.showSettingDialog)
         SettingDialog(state, vm::onAction)
 }
@@ -39,8 +43,8 @@ private fun SerialPort(
     state: SerialPortState = SerialPortState(
         model = SerialPortModel(portName = "ttyS0"),
         isConnected = true,
-        messages = (0..5).map { Message(it, "Client", it.toString(), it % 2 == 0) }
     ),
+    pagingMessages: LazyPagingItems<Message>,
     onAction: (SerialPortAction) -> Unit = {}
 ) {
     val connectInfo = if (state.isConnected) "${state.model.portName} : ${state.model.baudRate}" else ""
@@ -68,7 +72,7 @@ private fun SerialPort(
                 .padding(it)
                 // .then(if (state.expandedBottomBar) Modifier.padding(bottom = 100.dp) else Modifier)
                 .fillMaxSize(),
-            state.messages
+            pagingMessages
         )
     }
 }
@@ -76,8 +80,6 @@ private fun SerialPort(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    EpisodeTheme {
-        SerialPort()
-    }
+    PreviewTabs()
 }
 

@@ -4,7 +4,7 @@ import com.connor.episode.domain.usecase.CleanLogUseCase
 import com.connor.episode.domain.usecase.CloseConnectUseCase
 import com.connor.episode.domain.usecase.ConnectServerUseCase
 import com.connor.episode.domain.usecase.GetNetModelUseCase
-import com.connor.episode.domain.usecase.ObserveNewMessageUseCase
+import com.connor.episode.domain.usecase.GetPagingMessageUseCase
 import com.connor.episode.domain.usecase.ObservePrefUseCase
 import com.connor.episode.domain.usecase.ResendUseCase
 import com.connor.episode.domain.usecase.SendDataUseCase
@@ -20,10 +20,10 @@ class NetUseCases @Inject constructor(
     val writeMessageUseCase: WriteMessageUseCase,
     val cleanLogUseCase: CleanLogUseCase,
     val resendUseCase: ResendUseCase,
-    val observeNewMessageUseCase: ObserveNewMessageUseCase,
     val sendDataUseCase: SendDataUseCase,
     val updatePreferencesUseCase: UpdatePreferencesUseCase,
     val observePrefUseCase: ObservePrefUseCase,
     val startServerUseCase: StartServerUseCase,
+    val pagingMessageUseCase: GetPagingMessageUseCase
 ) {
 }

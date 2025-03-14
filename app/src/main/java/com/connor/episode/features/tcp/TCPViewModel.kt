@@ -20,6 +20,7 @@ class TCPViewModel @Inject constructor(
     }
 
     override val state get() = delegate.state
+    override val messagePagingFlow get() = delegate.messagePagingFlow
     override fun onAction(action: NetAction) = delegate.onAction(action)
 
 

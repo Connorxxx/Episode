@@ -48,7 +48,7 @@ class WebSocketsClientImpl @Inject constructor(
         ) {
             session = this
             "ip ${call.request.url.host} connected".logCat()
-            val incomingFlow: Flow<Either<NetworkError, ByteArray>> = incoming.consumeAsFlow().map {
+            incoming.consumeAsFlow().map {
                 when (it) {
                     is Frame.Text, is Frame.Binary -> it.readBytes().right()
                     is Frame.Close -> NetworkError.Read("Client send close", call.request.url.host).left()
@@ -61,9 +61,10 @@ class WebSocketsClientImpl @Inject constructor(
                 it.onLeft { session?.cancel() }
             }.onCompletion {
                 session = null
-                "end of incoming flow $it".logCat()
+                emit(NetworkError.Connect(it?.message ?: "Server disconnected").left())
+            }.collect { either: Either<NetworkError, ByteArray> ->
+                emit(either)
             }
-            emitAll(incomingFlow)
         }
     }.catch {
         emit(NetworkError.Connect(it.message ?: "Connect error").left())
