@@ -26,17 +26,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
@@ -55,8 +51,7 @@ class WebSocketsServerImpl @Inject constructor() : NetworkServer {
     override fun startServerAndRead(
         ip: String,
         port: Int
-    ): Flow<Either<NetworkError, Pair<String, ByteArray>>> =
-        channelFlow { //为了与Ktor的协程建立父子关系，符合结构化并发
+    ): Flow<Either<NetworkError, Pair<String, ByteArray>>> = channelFlow {
             embeddedServer = embeddedServer(CIO, host = ip, port = port) {
                 install(WebSockets) {
                     pingPeriod = 15.seconds

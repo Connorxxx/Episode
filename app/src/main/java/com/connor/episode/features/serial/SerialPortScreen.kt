@@ -18,11 +18,10 @@ import com.connor.episode.domain.model.business.SerialPortModel
 import com.connor.episode.domain.model.uimodel.BottomBarAction
 import com.connor.episode.domain.model.uimodel.SerialPortAction
 import com.connor.episode.domain.model.uimodel.SerialPortState
-import com.connor.episode.features.serial.components.SettingDialog
 import com.connor.episode.features.common.ui.common.ChatMessageLazyColumn
 import com.connor.episode.features.common.ui.common.MessageBottomBar
 import com.connor.episode.features.common.ui.common.TopBar
-import com.connor.episode.features.common.ui.theme.EpisodeTheme
+import com.connor.episode.features.serial.components.SettingDialog
 import com.connor.episode.features.tcp.PreviewTabs
 
 @Composable

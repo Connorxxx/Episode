@@ -19,7 +19,6 @@ import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

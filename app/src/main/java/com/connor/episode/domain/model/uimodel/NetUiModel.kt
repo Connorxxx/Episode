@@ -1,7 +1,6 @@
 package com.connor.episode.domain.model.uimodel
 
 import androidx.compose.ui.text.input.TextFieldValue
-import com.connor.episode.domain.model.business.Message
 import com.connor.episode.domain.model.business.NetModel
 import com.connor.episode.domain.model.business.NetResult
 import com.connor.episode.domain.model.business.SelectType

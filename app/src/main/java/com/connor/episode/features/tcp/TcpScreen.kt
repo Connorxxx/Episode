@@ -1,6 +1,5 @@
 package com.connor.episode.features.tcp
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -16,12 +15,12 @@ import com.connor.episode.domain.model.business.Message
 import com.connor.episode.domain.model.business.NetResult
 import com.connor.episode.domain.model.uimodel.NetAction
 import com.connor.episode.domain.model.uimodel.NetState
-import com.connor.episode.features.tcp.components.TCPSettingDialog
 import com.connor.episode.features.common.ui.common.ChatMessageLazyColumn
 import com.connor.episode.features.common.ui.common.MessageBottomBar
 import com.connor.episode.features.common.ui.common.PreviewMessageLazyColumn
 import com.connor.episode.features.common.ui.common.TopBar
 import com.connor.episode.features.common.ui.theme.EpisodeTheme
+import com.connor.episode.features.tcp.components.TCPSettingDialog
 
 @Composable
 fun TcpScreen(vm: TCPViewModel = hiltViewModel()) {

@@ -2,8 +2,9 @@ package com.connor.episode.domain.usecase
 
 import arrow.core.Either
 import com.connor.episode.core.di.Client
-import com.connor.episode.core.di.NetType.*
-import com.connor.episode.core.utils.logCat
+import com.connor.episode.core.di.NetType.TCP
+import com.connor.episode.core.di.NetType.UDP
+import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SelectType
 import com.connor.episode.domain.model.entity.MessageEntity

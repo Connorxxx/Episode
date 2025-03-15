@@ -6,12 +6,10 @@ import com.connor.episode.domain.model.business.SerialPortDevice
 import com.connor.episode.domain.model.config.SerialConfig
 import com.connor.episode.domain.model.error.SerialPortError
 import com.connor.episode.domain.repository.SerialPortRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class FakeSerialPortRepository @Inject constructor() : SerialPortRepository {

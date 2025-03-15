@@ -8,7 +8,6 @@ import androidx.paging.cachedIn
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.logCat
-import com.connor.episode.data.mapper.toMessage
 import com.connor.episode.domain.model.business.ModelType
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.uimodel.BottomBarAction

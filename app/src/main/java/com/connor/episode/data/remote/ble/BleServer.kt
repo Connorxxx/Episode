@@ -1,0 +1,160 @@
+package com.connor.episode.data.remote.ble
+
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattServerCallback
+import android.bluetooth.BluetoothGattService
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.AdvertiseSettings
+import android.content.Context
+import android.os.ParcelUuid
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import com.connor.episode.core.utils.TargetApi
+import com.connor.episode.domain.model.error.BluetoothError
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class BleServer @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val bluetoothManager: BluetoothManager
+) {
+
+    private val bluetoothAdapter by lazy { bluetoothManager.adapter }
+    private var gattServer: BluetoothGattServer? = null
+    private var messageCharacteristic: BluetoothGattCharacteristic? = null
+    private val connectedDevices = mutableSetOf<BluetoothDevice>()
+
+
+    @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
+    val startServerAndRead = callbackFlow {
+        val gattServerCallback = object : BluetoothGattServerCallback() {
+            override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> connectedDevices.add(device)
+                    BluetoothProfile.STATE_DISCONNECTED -> connectedDevices.remove(device)
+                }
+            }
+
+            override fun onCharacteristicWriteRequest(
+                device: BluetoothDevice,
+                requestId: Int,
+                characteristic: BluetoothGattCharacteristic,
+                preparedWrite: Boolean,
+                responseNeeded: Boolean,
+                offset: Int,
+                value: ByteArray
+            ) {
+                if (characteristic.uuid == BleConfig.MESSAGE_CHARACTERISTIC_UUID) {
+                    if (responseNeeded) {
+                        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                    }
+
+                    val message = String(value, Charsets.UTF_8)
+                    trySend(message.right())
+                }
+            }
+        }
+
+        gattServer = bluetoothManager.openGattServer(context, gattServerCallback)
+        val service = BluetoothGattService(
+            BleConfig.SERVICE_UUID,
+            BluetoothGattService.SERVICE_TYPE_PRIMARY
+        )
+        if (gattServer == null) {
+            trySend(BluetoothError.Start("gattServer is null").left())
+            return@callbackFlow
+        }
+        messageCharacteristic = BluetoothGattCharacteristic(
+            BleConfig.MESSAGE_CHARACTERISTIC_UUID,
+            BluetoothGattCharacteristic.PROPERTY_WRITE or
+                    BluetoothGattCharacteristic.PROPERTY_READ or
+                    BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+            BluetoothGattCharacteristic.PERMISSION_WRITE or
+                    BluetoothGattCharacteristic.PERMISSION_READ
+        )
+        service.addCharacteristic(messageCharacteristic)
+        gattServer!!.addService(service)
+
+        awaitClose {
+            gattServer!!.close()
+            gattServer = null
+        }
+    }.flowOn(Dispatchers.IO)
+
+    @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
+    val startAdvertising = callbackFlow {
+        val advertiseSettings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+            .setConnectable(true)
+            .setTimeout(0)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+            .build()
+
+        val advertiseData = AdvertiseData.Builder()
+            .setIncludeDeviceName(true)
+            .addServiceUuid(ParcelUuid(BleConfig.SERVICE_UUID))
+            .build()
+
+        val advertiseCallback = object : AdvertiseCallback() {
+            override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                trySend(Unit.right())
+            }
+            override fun onStartFailure(errorCode: Int) {
+                trySend(BluetoothError.Advertise("onStartFailure: $errorCode").left())
+            }
+        }
+
+        val bluetoothLeAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
+        bluetoothLeAdvertiser.startAdvertising(
+            advertiseSettings,
+            advertiseData,
+            advertiseCallback
+        )
+
+        awaitClose {
+            bluetoothAdapter.bluetoothLeAdvertiser.stopAdvertising(advertiseCallback)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
+    suspend fun sendMessage(message: String) = Either.catch {
+        if (gattServer == null) return BluetoothError.Write("gattServer is null").left()
+        if (connectedDevices.isEmpty()) return BluetoothError.Write("No connected devices").left()
+        val messageBytes = message.toByteArray(Charsets.UTF_8)
+        if (messageBytes.size > BleConfig.MAX_MESSAGE_LENGTH) return BluetoothError.Write("Message is too long").left()
+        coroutineScope {
+            val results = connectedDevices.map { device ->
+                async(Dispatchers.IO) {
+                    if (TargetApi.T) {
+                        gattServer!!.notifyCharacteristicChanged(device, messageCharacteristic!!, false, messageBytes)
+                    } else {
+                        messageCharacteristic!!.value = messageBytes
+                        gattServer!!.notifyCharacteristicChanged(device, messageCharacteristic!!, false)
+                    }
+                }
+            }.awaitAll()
+            val err = results.filterIsInstance<Either.Left<BluetoothError>>()
+            if (err.isNotEmpty()) err.first().value.left()
+        }
+    }.mapLeft {
+        BluetoothError.Write("Failed to send message: $it")
+    }
+
+}

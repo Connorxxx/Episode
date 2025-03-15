@@ -1,9 +1,7 @@
 package com.connor.episode.data.remote.network.wss
 
 import arrow.core.Either
-import arrow.core.Eval.Companion.raise
 import arrow.core.left
-import arrow.core.raise.either
 import arrow.core.right
 import com.connor.episode.core.utils.logCat
 import com.connor.episode.data.remote.network.NetworkClient
@@ -20,7 +18,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn

@@ -1,6 +1,5 @@
 package com.connor.episode.domain.usecase
 
-import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.msgType
 import com.connor.episode.domain.model.config.SerialConfig
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transform
 import javax.inject.Inject
 
 class OpenReadSerialUseCase @Inject constructor(

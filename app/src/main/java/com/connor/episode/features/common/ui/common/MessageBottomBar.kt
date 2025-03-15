@@ -52,7 +52,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import com.connor.episode.core.utils.filterHex
-import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.preference.BottomBarSettings
 import com.connor.episode.domain.model.uimodel.BottomBarAction
 import com.connor.episode.features.common.ui.state.rememberKeyboardState

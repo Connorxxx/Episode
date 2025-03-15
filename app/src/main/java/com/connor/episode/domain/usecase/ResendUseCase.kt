@@ -1,9 +1,10 @@
 package com.connor.episode.domain.usecase
 
 import com.connor.episode.core.di.Client
-import com.connor.episode.core.di.NetType.*
+import com.connor.episode.core.di.NetType.TCP
+import com.connor.episode.core.di.NetType.UDP
+import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.core.di.Server
-import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SelectType
 import com.connor.episode.domain.model.entity.MessageEntity
@@ -12,7 +13,6 @@ import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
@@ -63,7 +62,7 @@ class ResendUseCase @Inject constructor(
             emit("No message to resend")
             return@flow
         }
-        getResendSeconds(owner).onStart { emit(Unit) }.mapByOwner(owner, lastMsg).also { emitAll(it) }  //为什么不会执行？
+        getResendSeconds(owner).onStart { emit(Unit) }.mapByOwner(owner, lastMsg).also { emitAll(it) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

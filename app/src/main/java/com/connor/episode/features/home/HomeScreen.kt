@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.connor.episode.core.utils.navigateTopTo
 import com.connor.episode.domain.model.uimodel.HomeAction
 import com.connor.episode.features.HomeRoute
+import com.connor.episode.features.common.ui.theme.EpisodeTheme
 import com.connor.episode.features.serial.SerialPortScreen
 import com.connor.episode.features.serial.SerialPortViewModel
 import com.connor.episode.features.tcp.TCPViewModel
@@ -31,7 +32,6 @@ import com.connor.episode.features.udp.UDPViewModel
 import com.connor.episode.features.udp.UdpScreen
 import com.connor.episode.features.websocket.WebSocketScreen
 import com.connor.episode.features.websocket.WebSocketViewModel
-import com.connor.episode.features.common.ui.theme.EpisodeTheme
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel()) {

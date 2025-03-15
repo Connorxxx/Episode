@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
 import kotlinx.io.readByteArray
 import javax.inject.Inject
-import kotlin.collections.map
 
 class UDPServerImpl @Inject constructor(
     private val socketBuilder: UDPSocketBuilder

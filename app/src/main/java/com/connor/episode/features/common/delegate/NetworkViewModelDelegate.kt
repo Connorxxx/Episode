@@ -2,13 +2,11 @@ package com.connor.episode.features.common.delegate
 
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import com.connor.episode.core.utils.asciiToHexString
 import com.connor.episode.core.utils.getLocalIp
 import com.connor.episode.core.utils.hexStringToAscii
 import com.connor.episode.core.utils.logCat
-import com.connor.episode.data.mapper.toMessage
 import com.connor.episode.domain.model.business.ModelType
 import com.connor.episode.domain.model.business.NetResult
 import com.connor.episode.domain.model.business.Owner
@@ -18,7 +16,6 @@ import com.connor.episode.domain.model.uimodel.NetAction
 import com.connor.episode.domain.model.uimodel.NetState
 import com.connor.episode.domain.model.uimodel.TopBarAction
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +24,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.error
-import kotlin.to
 
 class NetworkViewModelDelegate(
     private val owner: Owner,

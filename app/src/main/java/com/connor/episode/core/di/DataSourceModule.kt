@@ -1,11 +1,8 @@
 package com.connor.episode.core.di
 
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
-import com.connor.episode.core.di.NetType.*
+import com.connor.episode.core.di.NetType.TCP
+import com.connor.episode.core.di.NetType.UDP
+import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.data.remote.network.NetworkClient
 import com.connor.episode.data.remote.network.NetworkServer
 import com.connor.episode.data.remote.network.tcp.TCPClientImpl
@@ -14,6 +11,11 @@ import com.connor.episode.data.remote.network.udp.UDPClientImpl
 import com.connor.episode.data.remote.network.udp.UDPServerImpl
 import com.connor.episode.data.remote.network.wss.WebSocketsClientImpl
 import com.connor.episode.data.remote.network.wss.WebSocketsServerImpl
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)

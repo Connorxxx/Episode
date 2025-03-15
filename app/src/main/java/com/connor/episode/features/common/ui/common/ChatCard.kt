@@ -41,7 +41,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.connor.episode.core.utils.formatSmartly
 import com.connor.episode.domain.model.business.Message
-import com.connor.episode.features.common.ui.state.rememberIsScrollingUp
 import com.connor.episode.features.common.ui.state.rememberKeyboardAnimationCompleteState
 import com.connor.episode.features.common.ui.theme.EpisodeTheme
 import com.connor.episode.features.common.ui.theme.messageName

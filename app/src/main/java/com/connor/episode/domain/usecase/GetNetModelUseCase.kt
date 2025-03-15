@@ -6,7 +6,6 @@ import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.ServerModel
 import com.connor.episode.domain.model.preference.NetPreferences
 import com.connor.episode.domain.model.uimodel.NetState
-import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject

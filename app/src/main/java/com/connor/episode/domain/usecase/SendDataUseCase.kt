@@ -1,14 +1,14 @@
 package com.connor.episode.domain.usecase
 
 import com.connor.episode.core.di.Client
-import com.connor.episode.core.di.NetType.*
+import com.connor.episode.core.di.NetType.TCP
+import com.connor.episode.core.di.NetType.UDP
+import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.core.di.Server
 import com.connor.episode.domain.model.business.ModelType
 import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.SerialPortRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SendDataUseCase @Inject constructor(
