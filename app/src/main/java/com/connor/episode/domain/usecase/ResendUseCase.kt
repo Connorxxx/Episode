@@ -53,6 +53,7 @@ class ResendUseCase @Inject constructor(
             Owner.UDP -> preferencesRepository.updateUDPPref {
                 it.copy(settings = it.settings.copy(resend = resend))
             }
+
             Owner.WebSocket -> preferencesRepository.updateWebSocketPref {
                 it.copy(settings = it.settings.copy(resend = resend))
             }
@@ -62,7 +63,8 @@ class ResendUseCase @Inject constructor(
             emit("No message to resend")
             return@flow
         }
-        getResendSeconds(owner).onStart { emit(Unit) }.mapByOwner(owner, lastMsg).also { emitAll(it) }
+        getResendSeconds(owner).onStart { emit(Unit) }.mapByOwner(owner, lastMsg)
+            .also { emitAll(it) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,6 +80,7 @@ class ResendUseCase @Inject constructor(
         Owner.UDP -> preferencesRepository.udpPrefFlow.transformLatest { pref ->
             resendLoop(pref.settings.resendSeconds)
         }
+
         Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.transformLatest { pref ->
             resendLoop(pref.settings.resendSeconds)
         }
@@ -92,21 +95,24 @@ class ResendUseCase @Inject constructor(
 
     private fun <T> Flow<T>.mapByOwner(owner: Owner, lastMsg: MessageEntity) = map {
         when (owner) {
-            Owner.SerialPort -> serialPortRepository.write(lastMsg.bytes)
+            Owner.SerialPort -> serialPortRepository
             Owner.TCP -> when (preferencesRepository.tcpPrefFlow.first().lastSelectType) {
-                SelectType.Server -> tcpServerRepository.sendBroadcastMessage(lastMsg.bytes)
-                SelectType.Client -> tcpClientRepository.sendBytesMessage(lastMsg.bytes)
+                SelectType.Server -> tcpServerRepository
+                SelectType.Client -> tcpClientRepository
             }
+
             Owner.UDP -> when (preferencesRepository.udpPrefFlow.first().lastSelectType) {
-                SelectType.Server -> udpServerRepository.sendBroadcastMessage(lastMsg.bytes)
-                SelectType.Client -> udpClientRepository.sendBytesMessage(lastMsg.bytes)
+                SelectType.Server -> udpServerRepository
+                SelectType.Client -> udpClientRepository
             }
+
             Owner.WebSocket -> when (preferencesRepository.webSocketPrefFlow.first().lastSelectType) {
-                SelectType.Server -> webSocketServerRepository.sendBroadcastMessage(lastMsg.bytes)
-                SelectType.Client -> webSocketClientRepository.sendBytesMessage(lastMsg.bytes)
+                SelectType.Server -> webSocketServerRepository
+                SelectType.Client -> webSocketClientRepository
             }
-        }.onRight {
-            messageRepository.addMessage(lastMsg.copy(id = 0))
-        }.leftOrNull()?.msg
+        }.sendMessage(lastMsg.content, preferencesRepository.getSendFormat(owner))
+            .onRight {
+                messageRepository.addMessage(lastMsg.copy(id = 0))
+            }.leftOrNull()?.msg
     }.filterNotNull()
 }

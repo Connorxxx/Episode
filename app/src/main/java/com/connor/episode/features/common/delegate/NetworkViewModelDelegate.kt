@@ -211,8 +211,8 @@ class NetworkViewModelDelegate(
     private suspend fun send(action: BottomBarAction.Send) = run {
         val byte = useCases.writeMessageUseCase(action.msg, owner)
         when (state.value.currentType) {
-            SelectType.Server -> useCases.sendDataUseCase(byte, modelType.first)
-            SelectType.Client -> useCases.sendDataUseCase(byte, modelType.second)
+            SelectType.Server -> useCases.sendDataUseCase(action.msg, modelType.first, owner)
+            SelectType.Client -> useCases.sendDataUseCase(action.msg, modelType.second, owner)
         }.fold(
             ifLeft = { state.value.copy(result = NetResult.Error, error = it) },
             ifRight = { state.value.copy(message = TextFieldValue()) }

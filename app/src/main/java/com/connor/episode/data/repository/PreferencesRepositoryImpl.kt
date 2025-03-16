@@ -1,11 +1,14 @@
 package com.connor.episode.data.repository
 
 import com.connor.episode.data.local.datastore.PreferencesModule
+import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.preference.NetPreferences
 import com.connor.episode.domain.model.preference.SerialPortPreferences
 import com.connor.episode.domain.repository.PreferencesRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import javax.inject.Inject
 
@@ -53,6 +56,21 @@ class PreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun updateWebSocketPref(pref: (NetPreferences) -> NetPreferences) =
         preferencesModule.wssPref.updateData(pref)
+
+
+    override suspend fun getSendFormat(owner: Owner) = when (owner) {
+        Owner.SerialPort -> serialPrefFlow.map { it.settings }
+        Owner.TCP -> tcpPrefFlow.map { it.settings }
+        Owner.UDP -> udpPrefFlow.map { it.settings }
+        Owner.WebSocket -> webSocketPrefFlow.map { it.settings }
+    }.first().sendFormat
+
+    override suspend fun getReceiveFormat(owner: Owner) = when (owner) {
+        Owner.SerialPort -> serialPrefFlow.map { it.settings }
+        Owner.TCP -> tcpPrefFlow.map { it.settings }
+        Owner.UDP -> udpPrefFlow.map { it.settings }
+        Owner.WebSocket -> webSocketPrefFlow.map { it.settings }
+    }.first().receiveFormat
 
 }
 

@@ -1,5 +1,5 @@
 package com.connor.episode.domain.model.error
 
-interface Error {
+interface EpisodeError {
     val msg: String
 }

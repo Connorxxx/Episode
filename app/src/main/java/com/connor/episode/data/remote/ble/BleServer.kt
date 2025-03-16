@@ -18,14 +18,16 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.connor.episode.core.utils.TargetApi
-import com.connor.episode.domain.model.error.BluetoothError
+import com.connor.episode.domain.model.error.BleError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -65,41 +67,29 @@ class BleServer @Inject constructor(
                     if (responseNeeded) {
                         gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                     }
-
-                    val message = String(value, Charsets.UTF_8)
-                    trySend(message.right())
+                    trySend(value.right())
                 }
             }
         }
 
-        gattServer = bluetoothManager.openGattServer(context, gattServerCallback)
-        val service = BluetoothGattService(
-            BleConfig.SERVICE_UUID,
-            BluetoothGattService.SERVICE_TYPE_PRIMARY
-        )
-        if (gattServer == null) {
-            trySend(BluetoothError.Start("gattServer is null").left())
-            return@callbackFlow
+        gattServer = bluetoothManager.openGattServer(context, gattServerCallback).also {
+            val success = it.addChatService()
+            if (!success) trySend(BleError.Start("Failed to add chat service").left())
         }
-        messageCharacteristic = BluetoothGattCharacteristic(
-            BleConfig.MESSAGE_CHARACTERISTIC_UUID,
-            BluetoothGattCharacteristic.PROPERTY_WRITE or
-                    BluetoothGattCharacteristic.PROPERTY_READ or
-                    BluetoothGattCharacteristic.PROPERTY_NOTIFY,
-            BluetoothGattCharacteristic.PERMISSION_WRITE or
-                    BluetoothGattCharacteristic.PERMISSION_READ
-        )
-        service.addCharacteristic(messageCharacteristic)
-        gattServer!!.addService(service)
 
         awaitClose {
-            gattServer!!.close()
+            gattServer?.apply {
+                clearServices()
+                close()
+            }
             gattServer = null
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).catch {
+        emit(BleError.Start("Failed to start server: $it").left())
+    }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
-    val startAdvertising = callbackFlow {
+    val startAdvertising: Flow<Either<BleError, Unit>> = callbackFlow {
         val advertiseSettings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
             .setConnectable(true)
@@ -117,7 +107,7 @@ class BleServer @Inject constructor(
                 trySend(Unit.right())
             }
             override fun onStartFailure(errorCode: Int) {
-                trySend(BluetoothError.Advertise("onStartFailure: $errorCode").left())
+                trySend(BleError.Advertise("onStartFailure: $errorCode").left())
             }
         }
 
@@ -131,30 +121,49 @@ class BleServer @Inject constructor(
         awaitClose {
             bluetoothAdapter.bluetoothLeAdvertiser.stopAdvertising(advertiseCallback)
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).catch {
+        emit(BleError.Advertise("Failed to start advertising: $it").left())
+    }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
-    suspend fun sendMessage(message: String) = Either.catch {
-        if (gattServer == null) return BluetoothError.Write("gattServer is null").left()
-        if (connectedDevices.isEmpty()) return BluetoothError.Write("No connected devices").left()
-        val messageBytes = message.toByteArray(Charsets.UTF_8)
-        if (messageBytes.size > BleConfig.MAX_MESSAGE_LENGTH) return BluetoothError.Write("Message is too long").left()
+    suspend fun sendMessage(rawMessage: ByteArray) = Either.catch {
+        if (gattServer == null) return BleError.Write("gattServer is null").left()
+        if (connectedDevices.isEmpty()) return BleError.Write("No connected devices").left()
+        if (rawMessage.size > BleConfig.MAX_MESSAGE_LENGTH) return BleError.Write("Message is too long").left()
         coroutineScope {
             val results = connectedDevices.map { device ->
                 async(Dispatchers.IO) {
                     if (TargetApi.T) {
-                        gattServer!!.notifyCharacteristicChanged(device, messageCharacteristic!!, false, messageBytes)
+                        gattServer!!.notifyCharacteristicChanged(device, messageCharacteristic!!, false, rawMessage)
                     } else {
-                        messageCharacteristic!!.value = messageBytes
+                        messageCharacteristic!!.value = rawMessage
                         gattServer!!.notifyCharacteristicChanged(device, messageCharacteristic!!, false)
                     }
                 }
             }.awaitAll()
-            val err = results.filterIsInstance<Either.Left<BluetoothError>>()
+            val err = results.filterIsInstance<Either.Left<BleError>>()
             if (err.isNotEmpty()) err.first().value.left()
         }
     }.mapLeft {
-        BluetoothError.Write("Failed to send message: $it")
+        BleError.Write("Failed to send message: $it")
+    }
+
+    @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
+    private fun BluetoothGattServer.addChatService(): Boolean {
+        val service = BluetoothGattService(
+            BleConfig.SERVICE_UUID,
+            BluetoothGattService.SERVICE_TYPE_PRIMARY
+        )
+        messageCharacteristic = BluetoothGattCharacteristic(
+            BleConfig.MESSAGE_CHARACTERISTIC_UUID,
+            BluetoothGattCharacteristic.PROPERTY_WRITE or
+                    BluetoothGattCharacteristic.PROPERTY_READ or
+                    BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+            BluetoothGattCharacteristic.PERMISSION_WRITE or
+                    BluetoothGattCharacteristic.PERMISSION_READ
+        )
+        service.addCharacteristic(messageCharacteristic)
+        return addService(service)
     }
 
 }

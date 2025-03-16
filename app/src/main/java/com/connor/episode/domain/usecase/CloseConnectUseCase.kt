@@ -24,14 +24,14 @@ class CloseConnectUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(type: ModelType) = withContext(Dispatchers.IO) {
         when (type) {
-            ModelType.SerialPort -> serialPortRepository.close()
-            ModelType.TCPServer -> tcpServerRepository.close()
-            ModelType.TCPClient -> tcpClientRepository.close()
-            ModelType.UDPServer -> udpServerRepository.close()
-            ModelType.UDPClient -> udpClientRepository.close()
-            ModelType.WebSocketServer -> webSocketServerRepository.close()
-            ModelType.WebSocketClient -> webSocketClientRepository.close()
-        }
+            ModelType.SerialPort -> serialPortRepository
+            ModelType.TCPServer -> tcpServerRepository
+            ModelType.TCPClient -> tcpClientRepository
+            ModelType.UDPServer -> udpServerRepository
+            ModelType.UDPClient -> udpClientRepository
+            ModelType.WebSocketServer -> webSocketServerRepository
+            ModelType.WebSocketClient -> webSocketClientRepository
+        }.close()
     }
 
 }

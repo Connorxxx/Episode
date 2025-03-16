@@ -29,14 +29,6 @@ class StartServerUseCase @Inject constructor(
 
     @OptIn(ExperimentalStdlibApi::class)
     suspend operator fun invoke(port: Int, owner: Owner) = run {
-        val currentType: suspend () -> Int = {
-        when (owner) {
-            Owner.UDP -> preferencesRepository.udpPrefFlow.first().settings.receiveFormat
-            Owner.TCP -> preferencesRepository.tcpPrefFlow.first().settings.receiveFormat
-            Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.first().settings.receiveFormat
-            Owner.SerialPort -> error("SerialPort can't start server")
-        }
-    }
         when (owner) {
             Owner.UDP -> preferencesRepository.updateUDPPref {
                 it.copy(
@@ -58,12 +50,13 @@ class StartServerUseCase @Inject constructor(
             }
             Owner.SerialPort -> error("SerialPort can't start server")
         }
+        val receiveFormat = preferencesRepository::getReceiveFormat
         when (owner) {
-            Owner.UDP -> udpServerRepository.startServerAndRead("0.0.0.0", port, currentType, owner)
-            Owner.TCP -> tcpServerRepository.startServerAndRead("0.0.0.0", port, currentType, owner)
-            Owner.WebSocket -> webSocketServerRepository.startServerAndRead("0.0.0.0", port, currentType, owner)
+            Owner.UDP -> udpServerRepository
+            Owner.TCP -> tcpServerRepository
+            Owner.WebSocket -> webSocketServerRepository
             Owner.SerialPort -> error("SerialPort can't start server")
-        }.mapLeftToUiError()
+        }.startServerAndRead("0.0.0.0", port, receiveFormat, owner).mapLeftToUiError()
     }
 
     fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {

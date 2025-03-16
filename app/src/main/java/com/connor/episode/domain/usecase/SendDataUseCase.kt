@@ -6,8 +6,10 @@ import com.connor.episode.core.di.NetType.UDP
 import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.core.di.Server
 import com.connor.episode.domain.model.business.ModelType
+import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
+import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository
 import javax.inject.Inject
 
@@ -18,18 +20,19 @@ class SendDataUseCase @Inject constructor(
     @Client(TCP) val tcpClientRepository: NetClientRepository,
     @Client(UDP) val udpClientRepository: NetClientRepository,
     @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
-    @Client(WebSocket) val webSocketClientRepository: NetClientRepository
+    @Client(WebSocket) val webSocketClientRepository: NetClientRepository,
+    val preferencesRepository: PreferencesRepository
 ) {
 
-    suspend operator fun invoke(bytes: ByteArray, type: ModelType) =
+    suspend operator fun invoke(msg: String, type: ModelType, owner: Owner) =
         when (type) {
-            ModelType.SerialPort -> serialPortRepository.write(bytes)
-            ModelType.TCPServer -> tcpServerRepository.sendBroadcastMessage(bytes)
-            ModelType.TCPClient -> tcpClientRepository.sendBytesMessage(bytes)
-            ModelType.UDPServer -> udpServerRepository.sendBroadcastMessage(bytes)
-            ModelType.UDPClient -> udpClientRepository.sendBytesMessage(bytes)
-            ModelType.WebSocketServer -> webSocketServerRepository.sendBroadcastMessage(bytes)
-            ModelType.WebSocketClient -> webSocketClientRepository.sendBytesMessage(bytes)
-        }.mapLeft { it.msg }
+            ModelType.SerialPort -> serialPortRepository
+            ModelType.TCPServer -> tcpServerRepository
+            ModelType.TCPClient -> tcpClientRepository
+            ModelType.UDPServer -> udpServerRepository
+            ModelType.UDPClient -> udpClientRepository
+            ModelType.WebSocketServer -> webSocketServerRepository
+            ModelType.WebSocketClient -> webSocketClientRepository
+        }.sendMessage(msg, preferencesRepository.getSendFormat(owner)).mapLeft { it.msg }
 
 }

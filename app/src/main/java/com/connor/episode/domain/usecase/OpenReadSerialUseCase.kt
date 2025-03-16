@@ -11,6 +11,7 @@ import com.connor.episode.domain.repository.PreferencesRepository
 import com.connor.episode.domain.repository.SerialPortRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
@@ -36,14 +37,13 @@ class OpenReadSerialUseCase @Inject constructor(
                 baudRate = cf.baudRate
             )
         }
-        serialPortRepository.openAndRead(cf).map {
-            it.onRight { bytes ->
-                val type = preferencesRepository.serialPrefFlow.first().settings.receiveFormat
-                val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
+        serialPortRepository.openAndRead(cf, preferencesRepository::getReceiveFormat).map {
+            it.onRight { content ->
+                val type = preferencesRepository.getReceiveFormat(Owner.SerialPort)
+                //val content = if (type == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                 val message = MessageEntity(
                     name = "Server",
                     content = content,
-                    bytes = bytes,
                     isMe = false,
                     type = msgType[type],
                     owner = Owner.SerialPort

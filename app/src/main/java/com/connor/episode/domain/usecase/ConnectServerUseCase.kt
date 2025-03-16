@@ -30,14 +30,6 @@ class ConnectServerUseCase @Inject constructor(
 ) {
     @OptIn(ExperimentalStdlibApi::class)
     suspend operator fun invoke(ip: String, port: Int, owner: Owner) = run {
-        val getType: suspend () -> Int = {
-            when (owner) {
-                Owner.UDP -> preferencesRepository.udpPrefFlow.map { it.settings }
-                Owner.TCP -> preferencesRepository.tcpPrefFlow.map { it.settings }
-                Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.map { it.settings }
-                Owner.SerialPort -> error("SerialPort can't connect")
-            }.first().receiveFormat
-        }
         when (owner) {
             Owner.UDP -> preferencesRepository.updateUDPPref {
                 it.copy(
@@ -65,12 +57,14 @@ class ConnectServerUseCase @Inject constructor(
 
             Owner.SerialPort -> error("SerialPort can't connect")
         }
+
+        val receiveFormat = preferencesRepository::getReceiveFormat
         when (owner) {
-            Owner.UDP -> udpClientRepository.connectAndRead(ip, port, getType, owner)
-            Owner.TCP -> tcpClientRepository.connectAndRead(ip, port, getType, owner)
-            Owner.WebSocket -> webSocketClientRepository.connectAndRead(ip, port, getType, owner)
+            Owner.UDP -> udpClientRepository
+            Owner.TCP -> tcpClientRepository
+            Owner.WebSocket -> webSocketClientRepository
             Owner.SerialPort -> error("SerialPort can't connect")
-        }.mapLeftToUiError()
+        }.connectAndRead(ip, port, receiveFormat, owner).mapLeftToUiError()
     }
 
     fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {

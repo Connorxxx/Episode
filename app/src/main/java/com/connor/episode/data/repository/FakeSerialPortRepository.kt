@@ -2,6 +2,7 @@ package com.connor.episode.data.repository
 
 import arrow.core.Either
 import arrow.core.right
+import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SerialPortDevice
 import com.connor.episode.domain.model.config.SerialConfig
 import com.connor.episode.domain.model.error.SerialPortError
@@ -14,23 +15,24 @@ import javax.inject.Inject
 
 class FakeSerialPortRepository @Inject constructor() : SerialPortRepository {
 
-    private val state = MutableSharedFlow<ByteArray>()
+    private val state = MutableSharedFlow<String>()
 
     override val getAllDevices = listOf("dev/ttyS0", "dev/ttyS1", "dev/ttyS2", "dev/ttyS3").map {
         SerialPortDevice(name = it.substringAfterLast("/"), path = it)
     }
 
-    override fun openAndRead(config: SerialConfig): Flow<Either<SerialPortError, ByteArray>> = state.map {
+    override fun openAndRead(config: SerialConfig,typeProvider: suspend (Owner) -> Int): Flow<Either<SerialPortError, String>> = state.map {
         delay(850)
         it.right()
     }
 
-    override suspend fun write(data: ByteArray): Either<SerialPortError, Unit> {
+    override suspend fun sendMessage(data: String, msgType: Int): Either<SerialPortError, Unit> {
         state.emit(data)
         return Unit.right()
     }
 
-    override fun close() {
+
+    override suspend fun close() {
 
     }
 

@@ -1,6 +1,7 @@
 package com.connor.episode.data.repository
 
 import arrow.core.Either
+import com.connor.episode.core.utils.getBytesMsg
 import com.connor.episode.data.remote.network.NetworkServer
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.msgType
@@ -22,18 +23,17 @@ class ServerRepositoryImpl @Inject constructor(
     override fun startServerAndRead(
         ip: String,
         port: Int,
-        typeProvider: suspend () -> Int,
+        typeProvider: suspend (Owner) -> Int,
         owner: Owner
     ): Flow<Either<NetworkError, MessageEntity>> {
         return networkServer.startServerAndRead(ip, port).map {
             it.map { (ip, bytes) ->
-                val currentType = typeProvider()
+                val currentType = typeProvider(owner)
                 val content =
                     if (currentType == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
                 MessageEntity(
                     name = ip,
                     content = content,
-                    bytes = bytes,
                     isMe = false,
                     type = msgType[currentType],
                     owner = owner
@@ -42,8 +42,8 @@ class ServerRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun sendBroadcastMessage(byteArray: ByteArray) =
-        networkServer.sendBroadcastMessage(byteArray)
+    override suspend fun sendMessage(msg: String, msgType: Int) =
+        networkServer.sendBroadcastMessage(getBytesMsg(msgType, msg))
 
     override suspend fun close() = networkServer.close()
 

@@ -161,7 +161,7 @@ class SerialPortViewModel @Inject constructor(
 
     private suspend fun send(action: BottomBarAction.Send) = run {
         val byte = writeMessageUseCase(action.msg, Owner.SerialPort)
-        sendDataUseCase(byte, ModelType.SerialPort).fold(
+        sendDataUseCase(action.msg, ModelType.SerialPort, Owner.SerialPort).fold(
             ifLeft = { _state.value.copy(extraInfo = it) },
             ifRight = {
                 _state.value.copy(

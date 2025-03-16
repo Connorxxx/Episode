@@ -17,11 +17,13 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.connor.episode.core.utils.TargetApi
-import com.connor.episode.domain.model.error.BluetoothError
+import com.connor.episode.domain.model.error.BleError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -41,8 +43,8 @@ class BleClient @Inject constructor(
             override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
                 when {
                     status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothGatt.STATE_CONNECTED ->
-                        gatt?.discoverServices() ?: trySend(BluetoothError.Connect("Failed to discover services").left())
-                    else -> trySend(BluetoothError.Connect("Failed to connect to device").left())
+                        gatt?.discoverServices() ?: trySend(BleError.Connect("Failed to discover services").left())
+                    else -> trySend(BleError.Connect("Failed to connect to device").left())
 
                 }
             }
@@ -50,16 +52,16 @@ class BleClient @Inject constructor(
             override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     val service = gatt?.getService(BleConfig.SERVICE_UUID) ?: run {
-                        trySend(BluetoothError.Connect("Failed to discover services").left())
+                        trySend(BleError.Connect("Failed to discover services").left())
                         return
                     }
                     messageCharacteristic = service.getCharacteristic(BleConfig.MESSAGE_CHARACTERISTIC_UUID) ?: run {
-                        trySend(BluetoothError.Connect("Failed to discover services").left())
+                        trySend(BleError.Connect("Failed to discover services").left())
                         return
                     }
                     val enable = gatt.setCharacteristicNotification(messageCharacteristic!!, true)
                     if (!enable) {
-                        trySend(BluetoothError.Connect("Failed to discover services").left())
+                        trySend(BleError.Connect("Failed to discover services").left())
                         return
                     }
                     gatt.writeDescriptorSafely(messageCharacteristic!!).onLeft {
@@ -67,7 +69,7 @@ class BleClient @Inject constructor(
                         return
                     }
 
-                } else trySend(BluetoothError.Connect("Failed to discover services").left())
+                } else trySend(BleError.Connect("Failed to discover services").left())
             }
 
             override fun onCharacteristicChanged(
@@ -77,10 +79,9 @@ class BleClient @Inject constructor(
                 characteristic?.let {
                     if (it.uuid == BleConfig.MESSAGE_CHARACTERISTIC_UUID) {
                         val messageBytes = it.value
-                        val message = String(messageBytes)
-                        trySend(message.right())
-                    } else trySend(BluetoothError.Connect("Failed to discover services").left())
-                } ?: trySend(BluetoothError.Connect("Failed to discover services").left())
+                        trySend(messageBytes.right())
+                    } else trySend(BleError.Connect("Failed to discover services").left())
+                } ?: trySend(BleError.Connect("Failed to discover services").left())
             }
 
             override fun onCharacteristicChanged( //Android 13 and higher version
@@ -89,19 +90,20 @@ class BleClient @Inject constructor(
                 value: ByteArray
             ) {
                 if (characteristic.uuid == BleConfig.MESSAGE_CHARACTERISTIC_UUID) {
-                    val message = String(value)
-                    trySend(message.right())
-                } else trySend(BluetoothError.Connect("Failed to discover services").left())
+                    trySend(value.right())
+                } else trySend(BleError.Connect("Failed to discover services").left())
             }
         }
         bluetoothGatt = device.connectGatt(context, false, gattCallback)
         awaitClose {
             disconnect()
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).catch {
+        emit(BleError.Connect("Failed to connect to device: $it").left())
+    }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_SCAN permission
-    val scanDevice = callbackFlow {
+    val scanDevice: Flow<Either<BleError, BluetoothDevice>> = callbackFlow {
         val scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 result?.device?.let { device ->
@@ -112,7 +114,7 @@ class BleClient @Inject constructor(
 
             override fun onScanFailed(errorCode: Int) {
                 super.onScanFailed(errorCode)
-                trySend(BluetoothError.Scan("Scan failed with error code: $errorCode").left())
+                trySend(BleError.Scan("Scan failed with error code: $errorCode").left())
                 close()
             }
         }
@@ -134,22 +136,23 @@ class BleClient @Inject constructor(
         awaitClose {
             bluetoothAdapter.bluetoothLeScanner.stopScan(scanCallback)
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).catch {
+        emit(BleError.Scan("Failed to scan device: $it").left())
+    }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
-    suspend fun sendMessage(message: String): Either<BluetoothError, Unit> {
-        val messageBytes = message.toByteArray()
-        if (messageBytes.size > BleConfig.MAX_MESSAGE_LENGTH) return BluetoothError.Write("Message is too long").left()
-        if (bluetoothGatt == null) return BluetoothError.Write("bluetoothGatt is null").left()
-        if (messageCharacteristic == null) return BluetoothError.Write("messageCharacteristic is null").left()
-        messageCharacteristic!!.value = messageBytes
-        return bluetoothGatt!!.writeCharacteristicSafely(messageCharacteristic!!, messageBytes)
+    suspend fun sendMessage(rawMessage: ByteArray): Either<BleError, Unit> {
+        if (rawMessage.size > BleConfig.MAX_MESSAGE_LENGTH) return BleError.Write("Message is too long").left()
+        if (bluetoothGatt == null) return BleError.Write("bluetoothGatt is null").left()
+        if (messageCharacteristic == null) return BleError.Write("messageCharacteristic is null").left()
+        messageCharacteristic!!.value = rawMessage
+        return bluetoothGatt!!.writeCharacteristicSafely(messageCharacteristic!!, rawMessage)
     }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
     private fun BluetoothGatt.writeDescriptorSafely(
         messageCharacteristic: BluetoothGattCharacteristic,
-    ): Either<BluetoothError, Unit> {
+    ): Either<BleError, Unit> {
         val descriptor =
             messageCharacteristic.getDescriptor(BleConfig.CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID)
         val success = if (TargetApi.T) {
@@ -159,7 +162,7 @@ class BleClient @Inject constructor(
             descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
             writeDescriptor(descriptor)
         }
-        return if (!success) BluetoothError.Write("Failed to write descriptor").left()
+        return if (!success) BleError.Write("Failed to write descriptor").left()
         else Unit.right()
     }
 
@@ -181,13 +184,13 @@ class BleClient @Inject constructor(
                 writeCharacteristic(characteristic)
             }
         }
-        if (!success) return BluetoothError.Write("Failed to write characteristic").left()
+        if (!success) return BleError.Write("Failed to write characteristic").left()
     }.mapLeft {
-        BluetoothError.Write("Failed to send message: $it")
+        BleError.Write("Failed to send message: $it")
     }
 
     @SuppressLint("MissingPermission")  //TODO Make sure has Manifest.permission.BLUETOOTH_CONNECT permission
-    fun disconnect() {
+    private fun disconnect() {
         bluetoothGatt?.apply {
             disconnect()
             close()

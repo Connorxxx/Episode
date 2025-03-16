@@ -1,6 +1,6 @@
 package com.connor.episode.domain.model.error
 
-sealed interface SerialPortError : Error {
+sealed interface SerialPortError : EpisodeError {
     data class Open(override val msg: String) : SerialPortError
     data class Write(override val msg: String) : SerialPortError
     sealed interface Read : SerialPortError {

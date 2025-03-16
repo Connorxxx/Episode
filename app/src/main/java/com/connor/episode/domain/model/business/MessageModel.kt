@@ -10,7 +10,7 @@ data class Message(
     val time: LocalDateTime = LocalDateTime.now(),  //TODO: Add sendState and sendType
     val sendSuccessful: Boolean = false,
     val type: String = "HEX",
-    val owner: Owner = Owner.SerialPort
+    val owner: Owner = Owner.SerialPort,
 )
 
 enum class Owner {
