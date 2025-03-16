@@ -8,6 +8,8 @@ import com.connor.episode.core.di.Server
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.business.SelectType
 import com.connor.episode.domain.model.entity.MessageEntity
+import com.connor.episode.domain.repository.BleClientRepository
+import com.connor.episode.domain.repository.BleServerRepository
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
@@ -36,7 +38,9 @@ class ResendUseCase @Inject constructor(
     @Client(TCP) val tcpClientRepository: NetClientRepository,
     @Client(UDP) val udpClientRepository: NetClientRepository,
     @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
-    @Client(WebSocket) val webSocketClientRepository: NetClientRepository
+    @Client(WebSocket) val webSocketClientRepository: NetClientRepository,
+    val bleServerRepository: BleServerRepository,
+    val bleClientRepository: BleClientRepository
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,6 +59,9 @@ class ResendUseCase @Inject constructor(
             }
 
             Owner.WebSocket -> preferencesRepository.updateWebSocketPref {
+                it.copy(settings = it.settings.copy(resend = resend))
+            }
+            Owner.BLE -> preferencesRepository.updateBlePref {
                 it.copy(settings = it.settings.copy(resend = resend))
             }
         }
@@ -84,6 +91,9 @@ class ResendUseCase @Inject constructor(
         Owner.WebSocket -> preferencesRepository.webSocketPrefFlow.transformLatest { pref ->
             resendLoop(pref.settings.resendSeconds)
         }
+        Owner.BLE -> preferencesRepository.blePrefFlow.transformLatest { pref ->
+            resendLoop(pref.settings.resendSeconds)
+        }
     }
 
     private suspend fun FlowCollector<Unit>.resendLoop(seconds: Int) {
@@ -109,6 +119,10 @@ class ResendUseCase @Inject constructor(
             Owner.WebSocket -> when (preferencesRepository.webSocketPrefFlow.first().lastSelectType) {
                 SelectType.Server -> webSocketServerRepository
                 SelectType.Client -> webSocketClientRepository
+            }
+            Owner.BLE -> when (preferencesRepository.webSocketPrefFlow.first().lastSelectType) {
+                SelectType.Server -> bleServerRepository
+                SelectType.Client -> bleClientRepository
             }
         }.sendMessage(lastMsg.content, preferencesRepository.getSendFormat(owner))
             .onRight {

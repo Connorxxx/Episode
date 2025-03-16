@@ -23,6 +23,8 @@ import androidx.navigation.compose.rememberNavController
 import com.connor.episode.core.utils.navigateTopTo
 import com.connor.episode.domain.model.uimodel.HomeAction
 import com.connor.episode.features.HomeRoute
+import com.connor.episode.features.ble.BleScreen
+import com.connor.episode.features.ble.BleVIewModel
 import com.connor.episode.features.common.ui.theme.EpisodeTheme
 import com.connor.episode.features.serial.SerialPortScreen
 import com.connor.episode.features.serial.SerialPortViewModel
@@ -41,6 +43,7 @@ fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel(
     val tcpViewModel: TCPViewModel = hiltViewModel()
     val udpViewModel: UDPViewModel = hiltViewModel()
     val webSocketViewModel: WebSocketViewModel = hiltViewModel()
+    val bleViewModel: BleVIewModel = hiltViewModel()
     LaunchedEffect(state.currentRoute) {
         if (state.currentRoute != navController.currentDestination?.route)
             navController.navigateTopTo(state.currentRoute)
@@ -63,6 +66,9 @@ fun HomeScreen(modifier: Modifier = Modifier, vm: HomeViewModel = hiltViewModel(
             }
             composable(HomeRoute.WebSocket.route) {
                 WebSocketScreen(webSocketViewModel)
+            }
+            composable(HomeRoute.Ble.route) {
+                BleScreen(bleViewModel)
             }
         }
     }

@@ -31,6 +31,7 @@ class CloseConnectUseCase @Inject constructor(
             ModelType.UDPClient -> udpClientRepository
             ModelType.WebSocketServer -> webSocketServerRepository
             ModelType.WebSocketClient -> webSocketClientRepository
+            else -> error("Invalid model type")
         }.close()
     }
 

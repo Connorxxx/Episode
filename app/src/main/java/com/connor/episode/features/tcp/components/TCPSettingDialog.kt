@@ -1,7 +1,6 @@
 package com.connor.episode.features.tcp.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,9 +14,6 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +22,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +35,7 @@ import com.connor.episode.domain.model.uimodel.NetAction.StartServer
 import com.connor.episode.domain.model.uimodel.NetAction.Top
 import com.connor.episode.domain.model.uimodel.NetState
 import com.connor.episode.domain.model.uimodel.TopBarAction
+import com.connor.episode.features.common.ui.common.CenterSegmentedButton
 import com.connor.episode.features.common.ui.common.OptionButton
 import com.connor.episode.features.common.ui.theme.EpisodeTheme
 
@@ -65,7 +61,7 @@ fun TCPSettingDialog(
             Column(
                 modifier = Modifier.padding(32.dp),
             ) {
-                TCPTypeSegmentedButton(
+                CenterSegmentedButton(
                     selectIdx = segmentSelect,
                     onSelected = { segmentSelect = it }
                 )
@@ -122,35 +118,6 @@ fun TCPSettingDialog(
                         onAction(Top(TopBarAction.IsShowSettingDialog(false)))
                     }
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TCPTypeSegmentedButton(
-    selectIdx: Int = 0,
-    onSelected: (Int) -> Unit = {}
-) {
-    val options = listOf("Server", "Client")
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        contentAlignment = Alignment.Center
-    ) {
-        SingleChoiceSegmentedButtonRow {
-            options.forEachIndexed { index, s ->
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = options.size
-                    ),
-                    onClick = { onSelected(index) },
-                    selected = index == selectIdx
-                ) {
-                    Text(text = s)
-                }
             }
         }
     }

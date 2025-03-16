@@ -7,6 +7,8 @@ import com.connor.episode.core.di.NetType.WebSocket
 import com.connor.episode.core.di.Server
 import com.connor.episode.domain.model.business.ModelType
 import com.connor.episode.domain.model.business.Owner
+import com.connor.episode.domain.repository.BleClientRepository
+import com.connor.episode.domain.repository.BleServerRepository
 import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.PreferencesRepository
@@ -21,6 +23,8 @@ class SendDataUseCase @Inject constructor(
     @Client(UDP) val udpClientRepository: NetClientRepository,
     @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
     @Client(WebSocket) val webSocketClientRepository: NetClientRepository,
+    val bleServerRepository: BleServerRepository,
+    val bleClientRepository: BleClientRepository,
     val preferencesRepository: PreferencesRepository
 ) {
 
@@ -33,6 +37,8 @@ class SendDataUseCase @Inject constructor(
             ModelType.UDPClient -> udpClientRepository
             ModelType.WebSocketServer -> webSocketServerRepository
             ModelType.WebSocketClient -> webSocketClientRepository
+            ModelType.BLEServer -> bleServerRepository
+            ModelType.BLEClient -> bleClientRepository
         }.sendMessage(msg, preferencesRepository.getSendFormat(owner)).mapLeft { it.msg }
 
 }

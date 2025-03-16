@@ -8,12 +8,16 @@ import com.connor.episode.core.di.SerialPortType.FAKE
 import com.connor.episode.core.di.SerialPortType.REAL
 import com.connor.episode.data.remote.network.NetworkClient
 import com.connor.episode.data.remote.network.NetworkServer
+import com.connor.episode.data.repository.BleClientRepositoryImpl
+import com.connor.episode.data.repository.BleServerRepositoryImpl
 import com.connor.episode.data.repository.ClientRepositoryImpl
 import com.connor.episode.data.repository.FakeSerialPortRepository
 import com.connor.episode.data.repository.MessageRepositoryImpl
 import com.connor.episode.data.repository.PreferencesRepositoryImpl
 import com.connor.episode.data.repository.SerialPortRepositoryImpl
 import com.connor.episode.data.repository.ServerRepositoryImpl
+import com.connor.episode.domain.repository.BleClientRepository
+import com.connor.episode.domain.repository.BleServerRepository
 import com.connor.episode.domain.repository.MessageRepository
 import com.connor.episode.domain.repository.NetClientRepository
 import com.connor.episode.domain.repository.NetServerRepository
@@ -99,6 +103,14 @@ object RepositoryModule {
     @Client(WebSocket)
     fun provideWebSocketClientRepository(@Client(WebSocket) dataSource: NetworkClient): NetClientRepository =
         ClientRepositoryImpl(dataSource)
+
+    @Provides
+    @Singleton
+    fun provideBleServerRepository(repository: BleServerRepositoryImpl): BleServerRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideBleClientRepository(repository: BleClientRepositoryImpl): BleClientRepository = repository
 }
 
 @Module

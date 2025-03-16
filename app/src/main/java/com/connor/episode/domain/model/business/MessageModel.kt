@@ -14,7 +14,7 @@ data class Message(
 )
 
 enum class Owner {
-    SerialPort, TCP, UDP, WebSocket
+    SerialPort, TCP, UDP, WebSocket, BLE
 }
 
 val msgType: List<String> = listOf("HEX", "ASCII")

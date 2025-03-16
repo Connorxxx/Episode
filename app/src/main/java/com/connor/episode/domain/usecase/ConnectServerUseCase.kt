@@ -16,7 +16,6 @@ import com.connor.episode.domain.repository.PreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -55,7 +54,7 @@ class ConnectServerUseCase @Inject constructor(
                 )
             }
 
-            Owner.SerialPort -> error("SerialPort can't connect")
+            else -> error("SerialPort can't connect")
         }
 
         val receiveFormat = preferencesRepository::getReceiveFormat
@@ -63,7 +62,7 @@ class ConnectServerUseCase @Inject constructor(
             Owner.UDP -> udpClientRepository
             Owner.TCP -> tcpClientRepository
             Owner.WebSocket -> webSocketClientRepository
-            Owner.SerialPort -> error("SerialPort can't connect")
+            else -> error("SerialPort can't connect")
         }.connectAndRead(ip, port, receiveFormat, owner).mapLeftToUiError()
     }
 

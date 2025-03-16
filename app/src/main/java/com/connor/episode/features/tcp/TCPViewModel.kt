@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TCPViewModel @Inject constructor(
-    val netUseCases: NetUseCases
+    private val netUseCases: NetUseCases
 ) : ViewModel(), NetworkViewModel {
 
     private val delegate by lazy {

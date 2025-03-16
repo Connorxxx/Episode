@@ -100,37 +100,39 @@ class SerialPortViewModel @Inject constructor(
         }
     }
 
-    private suspend fun bottom(action: BottomBarAction) = when (action) {
-        is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isNotEmpty())
-            send(action).let { state ->
-                _state.update { state }
-            } else Unit
+    private suspend fun bottom(action: BottomBarAction) {
+        when (action) {
+            is BottomBarAction.Send -> if (_state.value.isConnected && _state.value.message.text.isNotEmpty())
+                send(action).let { state ->
+                    _state.update { state }
+                } else Unit
 
-        is BottomBarAction.ReceiveFormatSelect -> updatePreferencesUseCase.serial {
-            it.copy(settings = it.settings.copy(receiveFormat = action.idx))
-        }
+            is BottomBarAction.ReceiveFormatSelect -> updatePreferencesUseCase.serial {
+                it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+            }
 
-        is BottomBarAction.SendFormatSelect -> sendFormatSelect(action)
+            is BottomBarAction.SendFormatSelect -> sendFormatSelect(action)
 
-        is BottomBarAction.Resend -> {
-            resendJob?.cancel()
-            resendJob = viewModelScope.launch {
-                resendUseCase(action.resend, Owner.SerialPort).collect {
-                    _state.value = state.value.copy(extraInfo = it)
+            is BottomBarAction.Resend -> {
+                resendJob?.cancel()
+                resendJob = viewModelScope.launch {
+                    resendUseCase(action.resend, Owner.SerialPort).collect {
+                        _state.value = state.value.copy(extraInfo = it)
+                    }
                 }
             }
-        }
 
-        is BottomBarAction.ResendSeconds -> updatePreferencesUseCase.serial {
-            it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
-        }
+            is BottomBarAction.ResendSeconds -> updatePreferencesUseCase.serial {
+                it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
+            }
 
-        is BottomBarAction.OnMessageChange -> _state.update { state ->
-            state.copy(message = action.msg)
-        }
+            is BottomBarAction.OnMessageChange -> _state.update { state ->
+                state.copy(message = action.msg)
+            }
 
-        is BottomBarAction.Expand -> _state.update {
-            it.copy(expandedBottomBar = action.expand)
+            is BottomBarAction.Expand -> _state.update {
+                it.copy(expandedBottomBar = action.expand)
+            }
         }
     }
 

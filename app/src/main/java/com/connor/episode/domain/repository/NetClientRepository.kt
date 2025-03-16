@@ -3,7 +3,6 @@ package com.connor.episode.domain.repository
 import arrow.core.Either
 import com.connor.episode.domain.model.business.Owner
 import com.connor.episode.domain.model.entity.MessageEntity
-import com.connor.episode.domain.model.error.EpisodeError
 import com.connor.episode.domain.model.error.NetworkError
 import com.connor.episode.domain.repository.common.Close
 import com.connor.episode.domain.repository.common.SendMessage

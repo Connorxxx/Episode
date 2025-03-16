@@ -15,7 +15,6 @@ import com.connor.episode.domain.repository.NetServerRepository
 import com.connor.episode.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -48,14 +47,14 @@ class StartServerUseCase @Inject constructor(
                     lastSelectType = SelectType.Server
                 )
             }
-            Owner.SerialPort -> error("SerialPort can't start server")
+            else -> error("SerialPort can't start server")
         }
         val receiveFormat = preferencesRepository::getReceiveFormat
         when (owner) {
             Owner.UDP -> udpServerRepository
             Owner.TCP -> tcpServerRepository
             Owner.WebSocket -> webSocketServerRepository
-            Owner.SerialPort -> error("SerialPort can't start server")
+            else -> error("SerialPort can't start server")
         }.startServerAndRead("0.0.0.0", port, receiveFormat, owner).mapLeftToUiError()
     }
 

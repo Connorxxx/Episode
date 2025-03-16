@@ -40,11 +40,11 @@ class NetworkViewModelDelegate(
     private var clientJob: Job? = null
     private var resendJob: Job? = null
 
-    val modelType = when (owner) {
+    private val modelType = when (owner) {
         Owner.TCP -> ModelType.TCPServer to ModelType.TCPClient
         Owner.UDP -> ModelType.UDPServer to ModelType.UDPClient
         Owner.WebSocket -> ModelType.WebSocketServer to ModelType.WebSocketClient
-        Owner.SerialPort -> error("Not support")
+        else -> error("Not support")
     }
 
     init {
@@ -54,7 +54,7 @@ class NetworkViewModelDelegate(
                 Owner.TCP -> useCases.observePrefUseCase.tcp
                 Owner.UDP -> useCases.observePrefUseCase.udp
                 Owner.WebSocket -> useCases.observePrefUseCase.webSocket
-                Owner.SerialPort -> error("Not support")
+                else -> error("Not support")
             }.onEach {
                 "$owner settings update: $it".logCat()
                 _state.update { state ->
@@ -182,7 +182,7 @@ class NetworkViewModelDelegate(
             Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
                 it.copy(settings = it.settings.copy(receiveFormat = action.idx))
             }
-            Owner.SerialPort -> error("not support")
+            else -> error("not support")
         }
         is BottomBarAction.SendFormatSelect -> sendFormatSelect(action)
         is BottomBarAction.Resend -> {
@@ -203,7 +203,7 @@ class NetworkViewModelDelegate(
             Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
                 it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
             }
-            Owner.SerialPort -> error("not support")
+            else -> error("not support")
         }
     }
 
@@ -268,7 +268,7 @@ class NetworkViewModelDelegate(
             Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
                 it.copy(settings = it.settings.copy(sendFormat = action.idx))
             }
-            Owner.SerialPort -> error("not support")
+            else -> error("not support")
         }
     }
 }
