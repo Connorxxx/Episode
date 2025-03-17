@@ -1,5 +1,7 @@
 package com.connor.episode.domain.usecase
 
+import com.connor.episode.domain.model.business.Owner
+import com.connor.episode.domain.model.preference.BlePreferences
 import com.connor.episode.domain.model.preference.NetPreferences
 import com.connor.episode.domain.model.preference.SerialPortPreferences
 import com.connor.episode.domain.repository.PreferencesRepository
@@ -20,5 +22,8 @@ class UpdatePreferencesUseCase @Inject constructor(
 
     suspend fun webSocket(config: (NetPreferences) -> NetPreferences) =
         preferencesRepository.updateWebSocketPref(config)
+
+    suspend fun ble(config: (BlePreferences) -> BlePreferences) =
+        preferencesRepository.updateBlePref(config)
 
 }

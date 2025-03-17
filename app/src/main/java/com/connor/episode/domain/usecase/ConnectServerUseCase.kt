@@ -27,7 +27,6 @@ class ConnectServerUseCase @Inject constructor(
     val preferencesRepository: PreferencesRepository,
     val messageRepository: MessageRepository
 ) {
-    @OptIn(ExperimentalStdlibApi::class)
     suspend operator fun invoke(ip: String, port: Int, owner: Owner) = run {
         when (owner) {
             Owner.UDP -> preferencesRepository.updateUDPPref {
@@ -66,7 +65,7 @@ class ConnectServerUseCase @Inject constructor(
         }.connectAndRead(ip, port, receiveFormat, owner).mapLeftToUiError()
     }
 
-    fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {
+    private fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {
         it.onRight { message ->
             messageRepository.addMessage(message)
         }.mapLeft { err ->

@@ -2,7 +2,11 @@ package com.connor.episode.data.repository
 
 import arrow.core.left
 import com.connor.episode.core.utils.getBytesMsg
+import com.connor.episode.core.utils.withTimeout
 import com.connor.episode.data.remote.ble.BleServer
+import com.connor.episode.domain.model.business.Owner
+import com.connor.episode.domain.model.business.msgType
+import com.connor.episode.domain.model.entity.MessageEntity
 import com.connor.episode.domain.model.error.BleError
 import com.connor.episode.domain.repository.BleServerRepository
 import kotlinx.coroutines.FlowPreview
@@ -17,18 +21,31 @@ class BleServerRepositoryImpl @Inject constructor(
     private val bleServer: BleServer
 ) : BleServerRepository {
 
-    @OptIn(FlowPreview::class)
     override fun startAdvertising(timeout: Duration) =
         bleServer.startAdvertising
-            .timeout(timeout)
+            .withTimeout(timeout)
             .catch {
                 if (it is TimeoutCancellationException) emit(
                     BleError.AdvertiseTimeout("Advertise timeout").left()
                 )
             }
 
-    override val startServerAndRead = bleServer.startServerAndRead.map { it.map { it.decodeToString() } }
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun startServerAndRead(typeProvider: suspend (Owner) -> Int) = bleServer.startServerAndRead.map {
+        it.map { (ip, bytes) ->
+            val currentType = typeProvider(Owner.BLE)
+            val content =
+                if (currentType == 0) bytes.toHexString().uppercase() else bytes.decodeToString()
+            MessageEntity(
+                name = ip,
+                content = content,
+                isMe = false,
+                type = msgType[currentType],
+                owner = Owner.BLE
+            )
+        }
+    }
 
-    override suspend fun sendMessage(data: String, msgType: Int) = bleServer.sendMessage(getBytesMsg(msgType, data))
+    override suspend fun sendMessage(msg: String, msgType: Int) = bleServer.sendMessage(getBytesMsg(msgType, msg))
 
 }

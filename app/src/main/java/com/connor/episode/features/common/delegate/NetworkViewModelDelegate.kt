@@ -154,56 +154,58 @@ class NetworkViewModelDelegate(
         }
     }
 
-    private suspend fun bottom(action: BottomBarAction) = when (action) {
-        is BottomBarAction.Send -> {
-            if (
-                (state.value.result != NetResult.Error ||
-                state.value.result != NetResult.Close) &&
-                state.value.message.text.isEmpty()
-            ) Unit
-            else _state.update { send(action) }
-        }
-
-        is BottomBarAction.Expand -> _state.update {
-            it.copy(expandedBottomBar = action.expand)
-        }
-
-        is BottomBarAction.OnMessageChange -> _state.update { state ->
-            state.copy(message = action.msg)
-        }
-
-        is BottomBarAction.ReceiveFormatSelect -> when(owner) {
-            Owner.TCP -> useCases.updatePreferencesUseCase.tcp {
-                it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+    private suspend fun bottom(action: BottomBarAction) {
+        when (action) {
+            is BottomBarAction.Send -> {
+                if (
+                    (state.value.result != NetResult.Error ||
+                            state.value.result != NetResult.Close) &&
+                    state.value.message.text.isEmpty()
+                ) Unit
+                else _state.update { send(action) }
             }
-            Owner.UDP -> useCases.updatePreferencesUseCase.udp {
-                it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+
+            is BottomBarAction.Expand -> _state.update {
+                it.copy(expandedBottomBar = action.expand)
             }
-            Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
-                it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+
+            is BottomBarAction.OnMessageChange -> _state.update { state ->
+                state.copy(message = action.msg)
             }
-            else -> error("not support")
-        }
-        is BottomBarAction.SendFormatSelect -> sendFormatSelect(action)
-        is BottomBarAction.Resend -> {
-            resendJob?.cancel()
-            resendJob = scope.launch {
-                useCases.resendUseCase(action.resend, owner).collect {
-                    _state.value = state.value.copy(error = it)
+
+            is BottomBarAction.ReceiveFormatSelect -> when(owner) {
+                Owner.TCP -> useCases.updatePreferencesUseCase.tcp {
+                    it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+                }
+                Owner.UDP -> useCases.updatePreferencesUseCase.udp {
+                    it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+                }
+                Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
+                    it.copy(settings = it.settings.copy(receiveFormat = action.idx))
+                }
+                else -> error("not support")
+            }
+            is BottomBarAction.SendFormatSelect -> sendFormatSelect(action)
+            is BottomBarAction.Resend -> {
+                resendJob?.cancel()
+                resendJob = scope.launch {
+                    useCases.resendUseCase(action.resend, owner).collect {
+                        _state.value = state.value.copy(error = it)
+                    }
                 }
             }
-        }
-        is BottomBarAction.ResendSeconds -> when (owner) {
-            Owner.TCP -> useCases.updatePreferencesUseCase.tcp {
-                it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
+            is BottomBarAction.ResendSeconds -> when (owner) {
+                Owner.TCP -> useCases.updatePreferencesUseCase.tcp {
+                    it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
+                }
+                Owner.UDP -> useCases.updatePreferencesUseCase.udp {
+                    it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
+                }
+                Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
+                    it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
+                }
+                else -> error("not support")
             }
-            Owner.UDP -> useCases.updatePreferencesUseCase.udp {
-                it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
-            }
-            Owner.WebSocket -> useCases.updatePreferencesUseCase.webSocket {
-                it.copy(settings = it.settings.copy(resendSeconds = action.seconds))
-            }
-            else -> error("not support")
         }
     }
 

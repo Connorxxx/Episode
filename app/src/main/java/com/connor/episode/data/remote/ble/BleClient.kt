@@ -49,9 +49,9 @@ class BleClient @Inject constructor(
                 }
             }
 
-            override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    val service = gatt?.getService(BleConfig.SERVICE_UUID) ?: run {
+                    val service = gatt.getService(BleConfig.SERVICE_UUID) ?: run {
                         trySend(BleError.Connect("Failed to discover services").left())
                         return
                     }
@@ -107,15 +107,14 @@ class BleClient @Inject constructor(
         val scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 result?.device?.let { device ->
-                    val matchesServiceUuid = result.scanRecord?.serviceUuids?.contains(ParcelUuid(BleConfig.SERVICE_UUID)) == true
-                    if (matchesServiceUuid) trySend(device.right())
+//                    val matchesServiceUuid = result.scanRecord?.serviceUuids?.contains(ParcelUuid(BleConfig.SERVICE_UUID)) == true
+//                    if (matchesServiceUuid) //判断特定服务
+                        trySend(device.right())
                 }
             }
 
             override fun onScanFailed(errorCode: Int) {
-                super.onScanFailed(errorCode)
                 trySend(BleError.Scan("Scan failed with error code: $errorCode").left())
-                close()
             }
         }
 
@@ -128,7 +127,7 @@ class BleClient @Inject constructor(
             .build()
 
         bluetoothAdapter.bluetoothLeScanner.startScan(
-            listOf(scanFilter),
+            listOf(),
             scanSettings,
             scanCallback
         )

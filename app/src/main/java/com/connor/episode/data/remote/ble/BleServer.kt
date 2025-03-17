@@ -18,6 +18,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.connor.episode.core.utils.TargetApi
+import com.connor.episode.core.utils.logCat
 import com.connor.episode.domain.model.error.BleError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,7 @@ class BleServer @Inject constructor(
             override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
                 when (newState) {
                     BluetoothProfile.STATE_CONNECTED -> connectedDevices.add(device)
+
                     BluetoothProfile.STATE_DISCONNECTED -> connectedDevices.remove(device)
                 }
             }
@@ -67,7 +69,7 @@ class BleServer @Inject constructor(
                     if (responseNeeded) {
                         gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                     }
-                    trySend(value.right())
+                    trySend((device.address to value).right())
                 }
             }
         }
@@ -142,6 +144,7 @@ class BleServer @Inject constructor(
                 }
             }.awaitAll()
             val err = results.filterIsInstance<Either.Left<BleError>>()
+            "Server send message: ${err.size} failed".logCat()
             if (err.isNotEmpty()) err.first().value.left()
         }
     }.mapLeft {

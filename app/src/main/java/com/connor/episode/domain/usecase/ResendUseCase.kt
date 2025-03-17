@@ -39,11 +39,10 @@ class ResendUseCase @Inject constructor(
     @Client(UDP) val udpClientRepository: NetClientRepository,
     @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
     @Client(WebSocket) val webSocketClientRepository: NetClientRepository,
-    val bleServerRepository: BleServerRepository,
-    val bleClientRepository: BleClientRepository
+    private val bleServerRepository: BleServerRepository,
+    private val bleClientRepository: BleClientRepository
 ) {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(resend: Boolean, owner: Owner) = flow {
         when (owner) {
             Owner.SerialPort -> preferencesRepository.updateSerialPref {
@@ -120,7 +119,7 @@ class ResendUseCase @Inject constructor(
                 SelectType.Server -> webSocketServerRepository
                 SelectType.Client -> webSocketClientRepository
             }
-            Owner.BLE -> when (preferencesRepository.webSocketPrefFlow.first().lastSelectType) {
+            Owner.BLE -> when (preferencesRepository.blePrefFlow.first().lastSelectType) {
                 SelectType.Server -> bleServerRepository
                 SelectType.Client -> bleClientRepository
             }

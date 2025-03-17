@@ -36,7 +36,6 @@ fun SerialPortScreen(vm: SerialPortViewModel = hiltViewModel()) {
         SettingDialog(state, vm::onAction)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SerialPort(
     state: SerialPortState = SerialPortState(

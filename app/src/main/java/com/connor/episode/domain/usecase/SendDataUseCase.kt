@@ -23,8 +23,8 @@ class SendDataUseCase @Inject constructor(
     @Client(UDP) val udpClientRepository: NetClientRepository,
     @Server(WebSocket) val webSocketServerRepository: NetServerRepository,
     @Client(WebSocket) val webSocketClientRepository: NetClientRepository,
-    val bleServerRepository: BleServerRepository,
-    val bleClientRepository: BleClientRepository,
+    private val bleServerRepository: BleServerRepository,
+    private val bleClientRepository: BleClientRepository,
     val preferencesRepository: PreferencesRepository
 ) {
 

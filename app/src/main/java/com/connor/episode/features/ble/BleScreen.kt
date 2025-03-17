@@ -17,6 +17,7 @@ import com.connor.episode.domain.model.uimodel.ConnectState
 import com.connor.episode.domain.model.uimodel.ServerState
 import com.connor.episode.features.ble.components.BleSettingDialog
 import com.connor.episode.features.common.ui.common.ChatMessageLazyColumn
+import com.connor.episode.features.common.ui.common.MessageBottomBar
 import com.connor.episode.features.common.ui.common.TopBar
 
 @Composable
@@ -43,7 +44,13 @@ fun Ble(
             )
         },
         bottomBar = {
-            //MessageBottomBar()
+            MessageBottomBar(
+                enabled = state.connectState == ConnectState.Connected || state.serverState == ServerState.Active,
+                expanded = state.expandedBottomBar,
+                state = state.bottomBarSettings,
+                message = state.message,
+                onAction = { onAction(BleAction.Bottom(it)) }
+            )
         }
     ) {
         ChatMessageLazyColumn(

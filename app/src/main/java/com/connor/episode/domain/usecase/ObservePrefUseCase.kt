@@ -11,4 +11,5 @@ class ObservePrefUseCase @Inject constructor(
     val tcp get() = preferencesRepository.tcpPrefFlow
     val udp get() = preferencesRepository.udpPrefFlow
     val webSocket get() = preferencesRepository.webSocketPrefFlow
+    val ble get() = preferencesRepository.blePrefFlow
 }

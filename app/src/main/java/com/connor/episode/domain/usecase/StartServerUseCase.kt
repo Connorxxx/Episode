@@ -58,7 +58,7 @@ class StartServerUseCase @Inject constructor(
         }.startServerAndRead("0.0.0.0", port, receiveFormat, owner).mapLeftToUiError()
     }
 
-    fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {
+    private fun Flow<Either<NetworkError, MessageEntity>>.mapLeftToUiError() = map {
         it.onRight { message ->
             messageRepository.addMessage(message)
         }.mapLeft { err ->

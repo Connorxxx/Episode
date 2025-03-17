@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 
 class ServerRepositoryImpl @Inject constructor(
-    val networkServer: NetworkServer,
+    private val networkServer: NetworkServer,
 ) : NetServerRepository {
 
     @OptIn(ExperimentalStdlibApi::class)
