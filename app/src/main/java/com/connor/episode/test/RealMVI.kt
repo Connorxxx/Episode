@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 interface CheckoutScope {
     suspend fun getCart(): Either<String, List<Item>>
     suspend fun calculateTotal(items: List<Item>): Int
-    suspend fun charge(amount: Int): Int
+    suspend fun charge(amount: Int): Either<String,Int>
     suspend fun track(event: String)
 }
 
@@ -110,7 +111,8 @@ class ViewModel(
     // 1. 事件源：不管是UI点击，还是后台结果，都汇入这里
     private val _events = MutableSharedFlow<CheckoutEvent>()
 
-    val state = _events.scan(CheckoutState(), checkoutReducer).stateIn(
+    val state = _events.scan(CheckoutState(), checkoutReducer).
+    stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CheckoutState()
@@ -127,16 +129,17 @@ class ViewModel(
     fun dispatch(event: CheckoutEvent.Action) = viewModelScope.launch {
         // 1. 先让 UI 响应 (比如显示 Loading)
         _events.emit(event)
-        handleSideEffect(event)
+        _events.emit(handleSideEffect(event))
     }
 
-    private suspend fun handleSideEffect(event: CheckoutEvent.Action) {
-        when (event) {
+    private suspend fun handleSideEffect(event: CheckoutEvent.Action)= when (event) {
             is CheckoutEvent.LoadCart -> interpreter.getCart().fold(
-                ifLeft = { _events.emit(CheckoutEvent.CheckoutFailed(it)) },
-                ifRight = { _events.emit(CheckoutEvent.CartLoaded(it)) }
+                ifLeft = { CheckoutEvent.CheckoutFailed(it) },
+                ifRight = { CheckoutEvent.CartLoaded(it) }
             )
-            is CheckoutEvent.ClickCheckout -> interpreter.charge(state.value.totalPrice)
+            is CheckoutEvent.ClickCheckout -> interpreter.charge(state.value.totalPrice).fold(
+                ifLeft = { CheckoutEvent.CheckoutFailed(it) },
+                ifRight = { CheckoutEvent.CheckoutSuccess(it.toString()) }
+            )
         }
-    }
 }
