@@ -1,29 +1,30 @@
 [versions]
-agp = "8.9.0"
-kotlin = "2.1.10"
+agp = "8.9.2"
+kotlin = "2.1.20"
 ksp = "2.1.10-1.0.31"
 hilt = "2.55"
 
-coreKtx = "1.15.0"
+coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycle = "2.8.7"
+lifecycle = "2.9.0"
 activityCompose = "1.10.1"
-composeBom = "2025.03.00"
-navigation-compose = "2.8.9"
+composeBom = "2025.05.00"
+navigation-compose = "2.9.0"
 hilt-navigation-compose = "1.2.0"
 hilt-compiler = "1.2.0"
-datastore-preferences = "1.1.3"
-kotlinx-coroutines = "1.10.1"
-kotlinx-serialization = "1.8.0"
-ktor = "3.1.1"
+datastore-preferences = "1.1.6"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.8.1"
+ktor = "3.1.3"
 arrow = "1.2.4"
-room = "2.6.1"
+room = "2.7.1"
 material3 = "1.4.0-alpha04"
 materialIconsExtended = "1.7.8"
 kotlinxIoCore = "0.7.0"
 paging = "3.3.6"
+molecule = "2.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -73,6 +74,7 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 android-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore-preferences" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 kotlinx-io-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-io-core", version.ref = "kotlinxIoCore" }
+molecule = { group = "app.cash.molecule", name = "molecule-runtime", version.ref = "molecule"}
 
 
 [plugins]

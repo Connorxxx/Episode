@@ -1,14 +1,28 @@
 package com.connor.episode.test
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.cash.molecule.RecompositionMode
+import app.cash.molecule.launchMolecule
 import arrow.core.Either
+import arrow.core.recover
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
@@ -142,4 +156,92 @@ class ViewModel(
                 ifRight = { CheckoutEvent.CheckoutSuccess(it.toString()) }
             )
         }
+}
+
+sealed interface CheckoutIntent {
+    data object LoadCart : CheckoutIntent
+    data object ClickCheckout : CheckoutIntent
+}
+
+class MoleViewModel(
+    private val interpreter: CheckoutScope
+) : ViewModel() {
+
+    private val _intents = Channel<CheckoutIntent>()
+
+    private val _effects = Channel<CheckoutEffect>(Channel.BUFFERED)
+    val effects = _effects.receiveAsFlow()
+
+    val state = viewModelScope.launchMolecule(mode = RecompositionMode.ContextClock) {
+        handleIntent()
+    }
+
+    fun dispatch(intent: CheckoutIntent) = viewModelScope.launch {
+        _intents.send(intent)
+    }
+
+    @Composable
+    private fun handleIntent(): CheckoutState {
+        var cartItems by remember { mutableStateOf(emptyList<Item>()) }
+        var isLoading by remember { mutableStateOf(false) }
+        var error by remember { mutableStateOf<String?>(null) }
+        var isCheckoutComplete by remember { mutableStateOf(false) }
+
+        suspend fun loadCard() {
+            isLoading = true
+            error = null
+            interpreter.getCart().fold(
+                ifLeft = {
+                    isLoading = false
+                    error = it
+                    _effects.send(CheckoutEffect.ShowToast("获取购物车失败: $it"))
+                },
+                ifRight = {
+                    isLoading = false
+                    cartItems = it
+                }
+            )
+        }
+
+        suspend fun checkOut() {
+            isLoading = true
+            error = null
+
+            val totalPrice = cartItems.sumOf { it.price }
+            interpreter.charge(totalPrice).fold(
+                ifLeft = {
+                    isLoading = false
+                    error = it
+                    _effects.send(CheckoutEffect.ShowToast("支付失败: $it"))
+                },
+                ifRight = { txId ->
+                    isLoading = false
+                    isCheckoutComplete = true
+                    cartItems = emptyList() // 结账成功清空购物车
+                    listOf(
+                        CheckoutEffect.ShowToast("支付成功"),
+                        CheckoutEffect.NavigateToSuccess(txId.toString()),
+                        CheckoutEffect.VibrateDevice
+                    ).forEach { _effects.send(it) }
+                }
+            )
+        }
+
+        LaunchedEffect(Unit) {
+            //天然防抖和结构化并发
+            _intents.receiveAsFlow().collectLatest { intent ->
+                when (intent) {
+                    CheckoutIntent.LoadCart -> loadCard()
+                    CheckoutIntent.ClickCheckout -> checkOut()
+                }
+            }
+        }
+
+        return CheckoutState(
+            cartItems = cartItems,
+            isLoading = isLoading,
+            error = error,
+            isCheckoutComplete = isCheckoutComplete
+        )
+    }
 }
